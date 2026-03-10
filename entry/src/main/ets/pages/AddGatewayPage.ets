@@ -3,7 +3,7 @@
  * 添加网关页面 - HarmonyOS 6 风格
  */
 import { router } from '@kit.ArkUI'
-import { Gateway, GatewayStatus } from '../models/Gateway'
+import { Gateway } from '../models/Gateway'
 import { GatewayViewModel } from '../viewmodels/GatewayViewModel'
 import { DesignTokens as DT, Spacing as SP, Typography as TYP } from '../constants'
 import { HmButton, HmInput, HmCard, HmConfirmDialog, ToastManager } from '../components/common'
@@ -27,19 +27,16 @@ struct AddGatewayPage {
     })
   }
 
-  // 验证 IP 地址格式
   private validateIp(ip: string): boolean {
     const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
     return ipRegex.test(ip)
   }
 
-  // 验证端口
   private validatePort(port: string): boolean {
     const portNum = parseInt(port)
     return !isNaN(portNum) && portNum > 0 && portNum <= 65535
   }
 
-  // 测试连接
   private async testConnection() {
     if (!this.gatewayIp) {
       ToastManager.warning('请输入 IP 地址')
@@ -59,7 +56,6 @@ struct AddGatewayPage {
     try {
       const http = getHttpService()
       http.setBaseUrl(`http://${this.gatewayIp}:${port}`)
-
       const isConnected = await http.checkConnection()
 
       this.testSuccess = isConnected
@@ -81,9 +77,7 @@ struct AddGatewayPage {
     }
   }
 
-  // 保存网关
   private async saveGateway() {
-    // 验证输入
     if (!this.gatewayIp) {
       ToastManager.warning('请输入 IP 地址')
       return
@@ -115,12 +109,10 @@ struct AddGatewayPage {
       ToastManager.success('网关添加成功')
       router.back()
     } else {
-      // 添加失败，显示确认对话框
       this.showConfirmDialog = true
     }
   }
 
-  // 强制保存（跳过验证）
   private async forceSaveGateway() {
     const port = parseInt(this.gatewayPort) || 8333
     const gateway = new Gateway()
@@ -148,9 +140,9 @@ struct AddGatewayPage {
         Column({ space: SP.L }) {
           // 说明卡片
           HmCard({
-            variant: 2, // FILLED
-            radius: 1,  // MEDIUM
-            padding: { top: SP.M, bottom: SP.M, left: SP.M, right: SP.M }
+            cardPadding: SP.M,
+            cardBgColor: DT.LIGHT_BG_SECONDARY,
+            cardBorderRadius: SP.RADIUS_M
           }) {
             Column({ space: SP.XS }) {
               Text('添加 OpenClaw 网关')
@@ -167,32 +159,34 @@ struct AddGatewayPage {
 
           // 表单区域
           HmCard({
-            padding: { top: SP.L, bottom: SP.L, left: SP.L, right: SP.L }
+            cardPadding: SP.L
           }) {
             Column({ space: SP.L }) {
               // 网关名称
               HmInput({
-                label: '网关名称',
-                placeholder: '自定义名称（可选）',
-                value: $$this.gatewayName,
-                maxLength: 50
+                inputLabel: '网关名称',
+                inputPlaceholder: '自定义名称（可选）',
+                inputValue: this.gatewayName,
+                onInputChange: (value: string) => { this.gatewayName = value },
+                inputMaxLength: 50
               })
 
               // IP 地址
               HmInput({
-                label: 'IP 地址 *',
-                placeholder: '例如：192.168.1.100',
-                value: $$this.gatewayIp,
-                maxLength: 15
+                inputLabel: 'IP 地址 *',
+                inputPlaceholder: '例如：192.168.1.100',
+                inputValue: this.gatewayIp,
+                onInputChange: (value: string) => { this.gatewayIp = value },
+                inputMaxLength: 15
               })
 
               // 端口
               HmInput({
-                label: '端口 *',
-                placeholder: '默认 8333',
-                value: $$this.gatewayPort,
-                type: 1, // NUMBER
-                maxLength: 5
+                inputLabel: '端口 *',
+                inputPlaceholder: '默认 8333',
+                inputValue: this.gatewayPort,
+                onInputChange: (value: string) => { this.gatewayPort = value },
+                inputMaxLength: 5
               })
 
               // 测试结果展示
@@ -224,20 +218,20 @@ struct AddGatewayPage {
               // 操作按钮
               Row({ space: SP.M }) {
                 HmButton({
-                  text: this.isTesting ? '测试中...' : '测试连接',
-                  type: 1, // SECONDARY
-                  width: 120,
-                  disabled: this.isTesting || !this.gatewayIp,
-                  onClick: () => this.testConnection()
+                  btnText: this.isTesting ? '测试中...' : '测试连接',
+                  btnType: 1,
+                  btnWidth: 120,
+                  btnDisabled: this.isTesting || !this.gatewayIp,
+                  onBtnClick: () => this.testConnection()
                 })
 
                 HmButton({
-                  text: '添加网关',
-                  type: 0, // PRIMARY
-                  width: 140,
-                  disabled: !this.gatewayIp || this.viewModel.isLoading,
-                  loading: this.viewModel.isLoading,
-                  onClick: () => this.saveGateway()
+                  btnText: '添加网关',
+                  btnType: 0,
+                  btnWidth: 140,
+                  btnDisabled: !this.gatewayIp || this.viewModel.isLoading,
+                  btnLoading: this.viewModel.isLoading,
+                  onBtnClick: () => this.saveGateway()
                 })
               }
               .width('100%')
@@ -276,15 +270,14 @@ struct AddGatewayPage {
     .titleMode(NavigationTitleMode.Mini)
     .mode(NavigationMode.Stack)
     .backgroundColor(DT.LIGHT_BG_SECONDARY)
-    // 确认对话框
     .overlay(
       HmConfirmDialog({
-        visible: this.showConfirmDialog,
-        title: '添加失败',
-        message: this.viewModel.errorMessage || '无法连接到网关，是否强制添加？',
-        confirmText: '强制添加',
-        cancelText: '取消',
-        danger: true,
+        confirmVisible: this.showConfirmDialog,
+        confirmTitle: '添加失败',
+        confirmMessage: this.viewModel.errorMessage || '无法连接到网关，是否强制添加？',
+        confirmBtnText: '强制添加',
+        cancelBtnText: '取消',
+        isDanger: true,
         onConfirm: () => {
           this.showConfirmDialog = false
           this.forceSaveGateway()

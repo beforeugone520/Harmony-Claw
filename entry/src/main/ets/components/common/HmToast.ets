@@ -2,7 +2,7 @@
  * HmToast.ets
  * HarmonyOS 6 风格轻提示组件
  */
-import { DesignTokens as DT, Spacing as SP, Animation as ANI, Typography as TYP } from '../../constants'
+import { DesignTokens as DT, Spacing as SP, Typography as TYP } from '../../constants'
 
 // Toast 类型
 export enum ToastType {
@@ -13,57 +13,24 @@ export enum ToastType {
   LOADING
 }
 
-// Toast 位置
-export enum ToastPosition {
-  TOP,
-  CENTER,
-  BOTTOM
-}
-
-// Toast 配置接口
-export interface ToastOptions {
-  message: string
-  type?: ToastType
-  position?: ToastPosition
-  duration?: number
-  icon?: Resource
-}
-
 @Component
 export struct HmToast {
-  // ========== 参数 ==========
-  @Prop visible: boolean = false
-  @Prop message: string = ''
-  @Prop type: ToastType = ToastType.INFO
-  @Prop position: ToastPosition = ToastPosition.CENTER
-  @Prop showIcon: boolean = true
+  @Prop toastVisible: boolean = false
+  @Prop toastMessage: string = ''
+  @Prop toastType: ToastType = ToastType.INFO
 
-  // 内部状态
-  @State isAnimating: boolean = false
-  @State displayVisible: boolean = false
-
-  // ========== 图标和颜色 ==========
-  private getIcon(): Resource {
-    switch (this.type) {
-      case ToastType.SUCCESS: return $r('app.media.ic_success')
-      case ToastType.WARNING: return $r('app.media.ic_warning')
-      case ToastType.ERROR: return $r('app.media.ic_error')
-      case ToastType.LOADING: return $r('app.media.ic_loading')
-      default: return $r('app.media.ic_info')
-    }
-  }
-
-  private getBgColor(): ResourceColor {
-    switch (this.type) {
-      case ToastType.SUCCESS: return DT.SUCCESS_BG
-      case ToastType.WARNING: return DT.WARNING_BG
-      case ToastType.ERROR: return DT.ERROR_BG
-      default: return DT.INFO_BG
+  private getIcon(): string {
+    switch (this.toastType) {
+      case ToastType.SUCCESS: return '✓'
+      case ToastType.WARNING: return '!'
+      case ToastType.ERROR: return '✕'
+      case ToastType.LOADING: return '⟳'
+      default: return 'ℹ'
     }
   }
 
   private getIconColor(): ResourceColor {
-    switch (this.type) {
+    switch (this.toastType) {
       case ToastType.SUCCESS: return DT.SUCCESS
       case ToastType.WARNING: return DT.WARNING
       case ToastType.ERROR: return DT.ERROR
@@ -71,37 +38,22 @@ export struct HmToast {
     }
   }
 
-  private getPositionY(): string {
-    switch (this.position) {
-      case ToastPosition.TOP: return '15%'
-      case ToastPosition.BOTTOM: return '85%'
-      default: return '50%'
-    }
-  }
-
   build() {
     Stack() {
-      if (this.displayVisible) {
-        Row() {
-          // 图标
-          if (this.showIcon) {
-            if (this.type === ToastType.LOADING) {
-              LoadingProgress()
-                .width(20)
-                .height(20)
-                .color(DT.LIGHT_TEXT_PRIMARY)
-                .margin({ right: SP.S })
-            } else {
-              Image(this.getIcon())
-                .width(20)
-                .height(20)
-                .fillColor(this.getIconColor())
-                .margin({ right: SP.S })
-            }
+      if (this.toastVisible) {
+        Row({ space: SP.S }) {
+          if (this.toastType === ToastType.LOADING) {
+            LoadingProgress()
+              .width(20)
+              .height(20)
+              .color(DT.LIGHT_TEXT_PRIMARY)
+          } else {
+            Text(this.getIcon())
+              .fontSize(16)
+              .fontColor(this.getIconColor())
           }
 
-          // 文字
-          Text(this.message)
+          Text(this.toastMessage)
             .fontSize(TYP.SIZE_BODY)
             .fontColor(DT.LIGHT_TEXT_PRIMARY)
             .maxLines(2)
@@ -116,32 +68,18 @@ export struct HmToast {
           offsetX: 0,
           offsetY: 4
         })
-        .opacity(this.visible ? 1 : 0)
-        .scale({
-          x: this.visible ? 1 : 0.8,
-          y: this.visible ? 1 : 0.8
-        })
-        .translate({ y: this.visible ? 0 : 20 })
-        .animation({
-          duration: ANI.DURATION_FAST,
-          curve: ANI.SPRING_LIGHT
-        })
       }
     }
     .width('100%')
     .height('100%')
     .position({ x: 0, y: 0 })
     .align(Alignment.Center)
-    .visibility(this.displayVisible ? Visibility.Visible : Visibility.Hidden)
-    .offset({ y: this.getPositionY() })
-    .pointerEvents(PointerEvents.None)
   }
 }
 
-// ========== Toast 管理器 ==========
+// Toast 管理器
 export class ToastManager {
   private static instance: ToastManager
-  private currentToast: HmToast | null = null
 
   static getInstance(): ToastManager {
     if (!ToastManager.instance) {
@@ -150,47 +88,40 @@ export class ToastManager {
     return ToastManager.instance
   }
 
-  // 显示 Toast
-  show(options: ToastOptions) {
-    // 这里可以通过 AppStorage 或事件总线来触发全局 Toast
-    AppStorage.setOrCreate('toast_message', options.message)
-    AppStorage.setOrCreate('toast_type', options.type ?? ToastType.INFO)
-    AppStorage.setOrCreate('toast_position', options.position ?? ToastPosition.CENTER)
+  show(message: string, type: ToastType = ToastType.INFO, duration: number = 2000) {
+    AppStorage.setOrCreate('toast_message', message)
+    AppStorage.setOrCreate('toast_type', type)
     AppStorage.setOrCreate('toast_visible', true)
 
-    // 自动隐藏
-    const duration = options.duration ?? 2000
-    if (options.type !== ToastType.LOADING) {
+    if (type !== ToastType.LOADING) {
       setTimeout(() => {
-        this.hide()
+        AppStorage.setOrCreate('toast_visible', false)
       }, duration)
     }
   }
 
-  // 隐藏 Toast
   hide() {
     AppStorage.setOrCreate('toast_visible', false)
   }
 
-  // 快捷方法
   static info(message: string, duration?: number) {
-    ToastManager.getInstance().show({ message, type: ToastType.INFO, duration })
+    ToastManager.getInstance().show(message, ToastType.INFO, duration)
   }
 
   static success(message: string, duration?: number) {
-    ToastManager.getInstance().show({ message, type: ToastType.SUCCESS, duration })
+    ToastManager.getInstance().show(message, ToastType.SUCCESS, duration)
   }
 
   static warning(message: string, duration?: number) {
-    ToastManager.getInstance().show({ message, type: ToastType.WARNING, duration })
+    ToastManager.getInstance().show(message, ToastType.WARNING, duration)
   }
 
   static error(message: string, duration?: number) {
-    ToastManager.getInstance().show({ message, type: ToastType.ERROR, duration })
+    ToastManager.getInstance().show(message, ToastType.ERROR, duration)
   }
 
   static loading(message: string = '加载中...') {
-    ToastManager.getInstance().show({ message, type: ToastType.LOADING, duration: 0 })
+    ToastManager.getInstance().show(message, ToastType.LOADING, 0)
   }
 
   static hideLoading() {
@@ -198,20 +129,17 @@ export class ToastManager {
   }
 }
 
-// ========== 全局 Toast 组件 ==========
 @Component
 export struct GlobalToast {
   @StorageLink('toast_visible') visible: boolean = false
   @StorageLink('toast_message') message: string = ''
   @StorageLink('toast_type') type: ToastType = ToastType.INFO
-  @StorageLink('toast_position') position: ToastPosition = ToastPosition.CENTER
 
   build() {
     HmToast({
-      visible: this.visible,
-      message: this.message,
-      type: this.type,
-      position: this.position
+      toastVisible: this.visible,
+      toastMessage: this.message,
+      toastType: this.type
     })
   }
 }
