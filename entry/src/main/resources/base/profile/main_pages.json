@@ -7,6 +7,8 @@
     "pages/SessionListPage",
     "pages/ChatPage",
     "pages/ProcessListPage",
-    "pages/SettingsPage"
+    "pages/SettingsPage",
+    "pages/AccountingPage",
+    "pages/SchedulePage"
   ]
 }

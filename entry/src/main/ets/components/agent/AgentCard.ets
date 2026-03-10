@@ -1,5 +1,5 @@
 import { Agent, AgentStatus } from '../../models/Agent'
-import { DesignTokens as DT, Spacing as SP, Typography as TYP } from '../../constants'
+import { DesignTokens as DT, Spacing as SP } from '../../constants'
 
 @Component
 export struct AgentCard {
@@ -8,18 +8,26 @@ export struct AgentCard {
   onItemClick?: () => void
   onSendMessage?: () => void
 
-  private getStatusColor(): ResourceColor {
+  private isDarkMode(): boolean {
+    try {
+      return AppStorage.get<boolean>('isSystemDarkMode') ?? false
+    } catch {
+      return false
+    }
+  }
+
+  private getStatusColor(): string {
     switch (this.agent.status) {
       case AgentStatus.ACTIVE:
-        return DT.SUCCESS
+        return DT.IOS_GREEN
       case AgentStatus.BUSY:
-        return DT.WARNING
+        return DT.IOS_ORANGE
       case AgentStatus.IDLE:
-        return DT.INFO
+        return DT.IOS_BLUE
       case AgentStatus.ERROR:
-        return DT.ERROR
+        return DT.IOS_RED
       default:
-        return DT.LIGHT_TEXT_TERTIARY
+        return '#8E8E93'
     }
   }
 
@@ -40,47 +48,71 @@ export struct AgentCard {
     }
   }
 
-  private getTypeIcon(): string {
+  private getTypeIcon(): Resource {
     switch (this.agent.type) {
       case 'main':
-        return '🏠'
+        return $r('sys.symbol.house.fill')
       case 'learning':
-        return '📚'
+        return $r('sys.symbol.book.fill')
       case 'note':
-        return '📝'
+        return $r('sys.symbol.note.text')
       case 'accounting':
-        return '💰'
+        return $r('sys.symbol.chart.pie.fill')
       case 'reminder':
-        return '⏰'
+        return $r('sys.symbol.alarm.fill')
       case 'coding':
-        return '💻'
+        return $r('sys.symbol.terminal.fill')
       default:
-        return '🤖'
+        return $r('sys.symbol.cpu.fill')
+    }
+  }
+
+  private getTypeColor(): string {
+    switch (this.agent.type) {
+      case 'main':
+        return DT.IOS_BLUE
+      case 'learning':
+        return DT.IOS_PURPLE
+      case 'note':
+        return DT.IOS_YELLOW
+      case 'accounting':
+        return DT.IOS_GREEN
+      case 'reminder':
+        return DT.IOS_ORANGE
+      case 'coding':
+        return DT.IOS_INDIGO
+      default:
+        return DT.IOS_BLUE
     }
   }
 
   build() {
     Column({ space: SP.S }) {
-      // 头部：图标和名称
+      // Header: icon and name
       Row({ space: SP.M }) {
-        // Agent 图标
-        Text(this.agent.emoji || this.getTypeIcon())
-          .fontSize(40)
-          .width(56)
-          .height(56)
-          .textAlign(TextAlign.Center)
-          .backgroundColor(DT.LIGHT_BG_SECONDARY)
-          .borderRadius(SP.RADIUS_M)
+        // Agent icon
+        Stack({ alignContent: Alignment.Center }) {
+          Circle()
+            .width(48)
+            .height(48)
+            .fill(this.getTypeColor() + '20')
+
+          SymbolGlyph(this.getTypeIcon())
+            .fontSize(22)
+            .fontColor([this.getTypeColor()])
+        }
+        .width(48)
+        .height(48)
 
         Column({ space: SP.XS }) {
-          // 名称和状态
+          // Name and status
           Row({ space: SP.S }) {
             Text(this.agent.displayName)
-              .fontSize(TYP.SIZE_H3)
-              .fontWeight(TYP.WEIGHT_BOLD)
-              .fontColor(DT.LIGHT_TEXT_PRIMARY)
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .fontColor($r('app.color.text_primary'))
 
-            // 状态指示器
+            // Status indicator
             Row({ space: 4 }) {
               Circle()
                 .width(8)
@@ -88,24 +120,25 @@ export struct AgentCard {
                 .fill(this.getStatusColor())
 
               Text(this.getStatusText())
-                .fontSize(TYP.SIZE_SMALL)
+                .fontSize(12)
                 .fontColor(this.getStatusColor())
+                .fontWeight(FontWeight.Medium)
             }
           }
 
-          // 类型标签
+          // Type label
           Text(this.agent.type.toUpperCase())
-            .fontSize(TYP.SIZE_CAPTION)
-            .fontColor(DT.LIGHT_TEXT_TERTIARY)
-            .backgroundColor(DT.LIGHT_BG_SECONDARY)
+            .fontSize(10)
+            .fontColor($r('app.color.text_tertiary'))
+            .backgroundColor(this.isDarkMode() ? '#2C2C2E' : '#F2F2F7')
             .padding({ left: SP.XS, right: SP.XS, top: 2, bottom: 2 })
-            .borderRadius(SP.RADIUS_XS)
+            .borderRadius(4)
 
-          // 主题描述
+          // Theme description
           if (this.agent.theme) {
             Text(this.agent.theme)
-              .fontSize(TYP.SIZE_CAPTION)
-              .fontColor(DT.LIGHT_TEXT_SECONDARY)
+              .fontSize(12)
+              .fontColor($r('app.color.text_secondary'))
               .maxLines(1)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
           }
@@ -113,65 +146,70 @@ export struct AgentCard {
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Start)
 
-        // 选中指示器
+        // Selected indicator
         if (this.isSelected) {
-          Circle()
-            .width(12)
-            .height(12)
-            .fill(DT.BRAND_PRIMARY)
+          SymbolGlyph($r('sys.symbol.checkmark.circle.fill'))
+            .fontSize(20)
+            .fontColor([DT.IOS_BLUE])
         }
       }
       .width('100%')
 
-      // 指标信息
+      // Metrics
       if (this.agent.metrics) {
-        Divider().height(1).color(DT.LIGHT_BG_SECONDARY).margin({ top: SP.S, bottom: SP.S })
+        Divider()
+          .height(1)
+          .color(this.isDarkMode() ? '#2C2C2E' : '#E5E5EA')
+          .margin({ top: SP.S, bottom: SP.S })
 
         Row({ space: SP.L }) {
           Column({ space: 2 }) {
             Text(String(this.agent.metrics.totalConversations))
-              .fontSize(TYP.SIZE_BODY)
-              .fontWeight(TYP.WEIGHT_BOLD)
-              .fontColor(DT.LIGHT_TEXT_PRIMARY)
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .fontColor($r('app.color.text_primary'))
             Text('会话')
-              .fontSize(TYP.SIZE_CAPTION)
-              .fontColor(DT.LIGHT_TEXT_TERTIARY)
+              .fontSize(11)
+              .fontColor($r('app.color.text_tertiary'))
           }
 
           Column({ space: 2 }) {
             Text(String(this.agent.metrics.totalMessages))
-              .fontSize(TYP.SIZE_BODY)
-              .fontWeight(TYP.WEIGHT_BOLD)
-              .fontColor(DT.LIGHT_TEXT_PRIMARY)
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .fontColor($r('app.color.text_primary'))
             Text('消息')
-              .fontSize(TYP.SIZE_CAPTION)
-              .fontColor(DT.LIGHT_TEXT_TERTIARY)
+              .fontSize(11)
+              .fontColor($r('app.color.text_tertiary'))
           }
 
           Column({ space: 2 }) {
             Text(`${this.agent.metrics.avgResponseTime}ms`)
-              .fontSize(TYP.SIZE_BODY)
-              .fontWeight(TYP.WEIGHT_BOLD)
-              .fontColor(DT.LIGHT_TEXT_PRIMARY)
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .fontColor($r('app.color.text_primary'))
             Text('响应')
-              .fontSize(TYP.SIZE_CAPTION)
-              .fontColor(DT.LIGHT_TEXT_TERTIARY)
+              .fontSize(11)
+              .fontColor($r('app.color.text_tertiary'))
           }
         }
         .width('100%')
         .justifyContent(FlexAlign.SpaceAround)
       }
 
-      // 操作按钮
+      // Action button
       if (this.agent.status === AgentStatus.ACTIVE || this.agent.status === AgentStatus.IDLE) {
-        Divider().height(1).color(DT.LIGHT_BG_SECONDARY).margin({ top: SP.S, bottom: SP.S })
+        Divider()
+          .height(1)
+          .color(this.isDarkMode() ? '#2C2C2E' : '#E5E5EA')
+          .margin({ top: SP.S, bottom: SP.S })
 
         Row({ space: SP.M }) {
           Button('发送消息', { type: ButtonType.Capsule })
-            .fontSize(TYP.SIZE_SMALL)
-            .fontColor(DT.BRAND_PRIMARY)
-            .backgroundColor(DT.BRAND_LIGHT)
-            .height(32)
+            .fontSize(13)
+            .fontColor(DT.IOS_BLUE)
+            .backgroundColor(DT.IOS_BLUE + '15')
+            .height(36)
             .layoutWeight(1)
             .onClick(() => {
               if (this.onSendMessage) this.onSendMessage()
@@ -182,9 +220,18 @@ export struct AgentCard {
     }
     .width('100%')
     .padding(SP.M)
-    .backgroundColor(this.isSelected ? DT.BRAND_LIGHT : DT.LIGHT_BG_PRIMARY)
-    .borderRadius(SP.RADIUS_M)
-    .shadow({ radius: 4, color: DT.SHADOW_LIGHT, offsetX: 0, offsetY: 1 })
+    .backgroundColor(this.isSelected ? (this.isDarkMode() ? '#1C3D5C' : '#E8F4FD') : (this.isDarkMode() ? '#1C1C1E' : '#FFFFFF'))
+    .borderRadius(16)
+    .border({
+      width: this.isSelected ? 2 : 0,
+      color: DT.IOS_BLUE
+    })
+    .shadow(this.isDarkMode() ? undefined : {
+      radius: 8,
+      color: 'rgba(0,0,0,0.06)',
+      offsetX: 0,
+      offsetY: 2
+    })
     .onClick(() => {
       if (this.onItemClick) this.onItemClick()
     })

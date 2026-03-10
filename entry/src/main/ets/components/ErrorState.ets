@@ -1,5 +1,4 @@
-import { Colors } from '../styles/DesignTokens';
-import { Spacing, Layout } from '../styles/Spacing';
+import { Spacing as SP } from '../constants';
 
 @Component
 export struct ErrorState {
@@ -7,30 +6,30 @@ export struct ErrorState {
   @Prop message: string = 'Something went wrong.';
 
   build() {
-    Column({ space: Spacing.lg }) {
+    Column({ space: SP.L }) {
       Column()
         .width(64)
         .height(64)
-        .backgroundColor(Colors.error)
+        .backgroundColor($r('app.color.error'))
         .borderRadius(32)
 
-      Column({ space: Spacing.sm }) {
+      Column({ space: SP.S }) {
         Text(this.title)
           .fontSize(18)
           .fontWeight(FontWeight.Medium)
-          .fontColor(Colors.textPrimary)
+          .fontColor($r('app.color.text_primary'))
 
         Text(this.message)
           .fontSize(14)
-          .fontColor(Colors.textSecondary)
+          .fontColor($r('app.color.text_secondary'))
           .textAlign(TextAlign.Center)
       }
 
       Button('Retry')
         .width(120)
-        .height(Layout.buttonHeightMedium)
-        .backgroundColor(Colors.brandPrimary)
-        .fontColor(Colors.textInverse)
+        .height(44)
+        .backgroundColor($r('app.color.brand_primary'))
+        .fontColor($r('app.color.text_inverse'))
         .onClick(() => {})
     }
     .width('100%')

@@ -1,5 +1,4 @@
 import { ProcessStatus } from '../../models/Process';
-import { Colors } from '../../styles/DesignTokens';
 
 @Component
 export struct ProcessStatusIcon {
@@ -9,15 +8,15 @@ export struct ProcessStatusIcon {
   private getStatusColor(): ResourceColor {
     switch (this.status) {
       case ProcessStatus.RUNNING:
-        return Colors.success;
+        return $r('app.color.success');
       case ProcessStatus.STOPPED:
-        return Colors.textTertiary;
+        return $r('app.color.text_tertiary');
       case ProcessStatus.ERROR:
-        return Colors.error;
+        return $r('app.color.error');
       case ProcessStatus.PENDING:
-        return Colors.warning;
+        return $r('app.color.warning');
       default:
-        return Colors.textTertiary;
+        return $r('app.color.text_tertiary');
     }
   }
 

@@ -1,44 +1,43 @@
-import { Colors } from '../styles/DesignTokens';
-import { Spacing, Layout } from '../styles/Spacing';
+import { Spacing as SP } from '../constants';
 
 @Component
 struct MessageListPage {
   @State messageList: string[] = ['Message 1', 'Message 2'];
 
   build() {
-    Column({ space: Spacing.lg }) {
+    Column({ space: SP.L }) {
       // Header
       Row() {
         Text('Messages')
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
-          .fontColor(Colors.textPrimary)
+          .fontColor($r('app.color.text_primary'))
 
         Blank()
       }
       .width('100%')
       .height(56)
-      .padding({ left: Spacing.lg, right: Spacing.lg })
+      .padding({ left: SP.L, right: SP.L })
 
       // List
-      List({ space: Spacing.md }) {
+      List({ space: SP.M }) {
         ForEach(this.messageList, (item: string, index: number) => {
           ListItem() {
             Row() {
               Text(item)
                 .fontSize(16)
-                .fontColor(Colors.textPrimary)
+                .fontColor($r('app.color.text_primary'))
 
               Blank()
 
               Text('New')
                 .fontSize(12)
-                .fontColor(Colors.warning)
+                .fontColor($r('app.color.warning'))
             }
             .width('100%')
             .height(64)
-            .padding({ left: Spacing.lg, right: Spacing.lg })
-            .backgroundColor(Colors.surfaceCard)
+            .padding({ left: SP.L, right: SP.L })
+            .backgroundColor($r('app.color.surface_card'))
             .borderRadius(8)
           }
         }, (item: string) => item)
@@ -48,6 +47,6 @@ struct MessageListPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(Colors.backgroundPrimary)
+    .backgroundColor($r('app.color.background_primary'))
   }
 }

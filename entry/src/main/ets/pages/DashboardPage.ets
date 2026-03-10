@@ -1,74 +1,73 @@
 import { router } from '@kit.ArkUI';
-import { Colors } from '../styles/DesignTokens';
-import { Spacing, Layout } from '../styles/Spacing';
+import { Spacing as SP } from '../constants';
 
 @Component
 export struct DashboardPage {
   @State isLoading: boolean = false;
 
   build() {
-    Column({ space: Spacing.lg }) {
+    Column({ space: SP.L }) {
       // Stats Grid
-      Row({ space: Spacing.md }) {
-        Column({ space: Spacing.sm }) {
+      Row({ space: SP.M }) {
+        Column({ space: SP.S }) {
           Text('5')
             .fontSize(28)
             .fontWeight(FontWeight.Bold)
-            .fontColor(Colors.brandPrimary)
+            .fontColor($r('app.color.brand_primary'))
           Text('Active Gateways')
             .fontSize(12)
-            .fontColor(Colors.textSecondary)
+            .fontColor($r('app.color.text_secondary'))
         }
         .layoutWeight(1)
-        .padding(Spacing.md)
-        .backgroundColor(Colors.surfaceCard)
+        .padding(SP.M)
+        .backgroundColor($r('app.color.surface_card'))
         .borderRadius(12)
 
-        Column({ space: Spacing.sm }) {
+        Column({ space: SP.S }) {
           Text('12')
             .fontSize(28)
             .fontWeight(FontWeight.Bold)
-            .fontColor(Colors.success)
+            .fontColor($r('app.color.success'))
           Text('Sessions')
             .fontSize(12)
-            .fontColor(Colors.textSecondary)
+            .fontColor($r('app.color.text_secondary'))
         }
         .layoutWeight(1)
-        .padding(Spacing.md)
-        .backgroundColor(Colors.surfaceCard)
+        .padding(SP.M)
+        .backgroundColor($r('app.color.surface_card'))
         .borderRadius(12)
       }
       .width('100%')
 
       // Quick Actions
-      Column({ space: Spacing.md }) {
+      Column({ space: SP.M }) {
         Text('Quick Actions')
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
-          .fontColor(Colors.textPrimary)
+          .fontColor($r('app.color.text_primary'))
           .width('100%')
 
-        Row({ space: Spacing.md }) {
+        Row({ space: SP.M }) {
           Button('Scan QR')
             .layoutWeight(1)
             .height(44)
-            .backgroundColor(Colors.brandPrimary)
+            .backgroundColor($r('app.color.brand_primary'))
             .onClick(() => {})
 
           Button('Add Manual')
             .layoutWeight(1)
             .height(44)
-            .backgroundColor(Colors.brandSecondary)
+            .backgroundColor($r('app.color.brand_secondary'))
             .onClick(() => {})
         }
         .width('100%')
       }
       .width('100%')
-      .padding(Spacing.lg)
-      .backgroundColor(Colors.surfaceCard)
+      .padding(SP.L)
+      .backgroundColor($r('app.color.surface_card'))
       .borderRadius(12)
     }
     .width('100%')
-    .padding(Spacing.lg)
+    .padding(SP.L)
   }
 }

@@ -1,0 +1,77 @@
+{
+  "version": "1.0",
+  "updatedAt": 1700000000000,
+  "events": [
+    {
+      "id": "event_001",
+      "title": "项目评审会议",
+      "description": "与团队讨论Q2计划",
+      "startTime": 1700104800000,
+      "endTime": 1700108400000,
+      "location": "会议室A",
+      "category": "工作",
+      "isAllDay": false,
+      "recurrence": null,
+      "reminder": 15,
+      "syncedToCalendar": false,
+      "createdAt": 1700018400000
+    },
+    {
+      "id": "event_002",
+      "title": "健身训练",
+      "description": "有氧运动30分钟",
+      "startTime": 1700148000000,
+      "endTime": 1700151600000,
+      "location": "健身房",
+      "category": "健康",
+      "isAllDay": false,
+      "recurrence": null,
+      "reminder": 30,
+      "syncedToCalendar": true,
+      "createdAt": 1700061600000
+    },
+    {
+      "id": "event_003",
+      "title": "团队聚餐",
+      "description": "庆祝项目上线",
+      "startTime": 1700191200000,
+      "endTime": 1700198400000,
+      "location": "海底捞",
+      "category": "社交",
+      "isAllDay": false,
+      "recurrence": null,
+      "reminder": 60,
+      "syncedToCalendar": false,
+      "createdAt": 1700095200000
+    },
+    {
+      "id": "event_004",
+      "title": "学习新技术",
+      "description": "研究HarmonyOS新特性",
+      "startTime": 1700198400000,
+      "endTime": 1700202000000,
+      "location": "家中",
+      "category": "学习",
+      "isAllDay": false,
+      "recurrence": null,
+      "reminder": 15,
+      "syncedToCalendar": false,
+      "createdAt": 1700098800000
+    },
+    {
+      "id": "event_005",
+      "title": "周末出行",
+      "description": "去郊外徒步",
+      "startTime": 1700284800000,
+      "endTime": 1700317200000,
+      "location": "香山公园",
+      "category": "个人",
+      "isAllDay": true,
+      "recurrence": null,
+      "reminder": 120,
+      "syncedToCalendar": false,
+      "createdAt": 1700098800000
+    }
+  ],
+  "categories": ["工作", "个人", "健康", "学习", "社交", "娱乐"]
+}

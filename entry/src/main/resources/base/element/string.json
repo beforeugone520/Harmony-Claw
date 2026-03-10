@@ -17,6 +17,10 @@
       "value": "Required to connect to OpenClaw Gateway API"
     },
     {
+      "name": "calendar_permission_reason",
+      "value": "Required to sync schedule events to system calendar"
+    },
+    {
       "name": "page_title_dashboard",
       "value": "Dashboard"
     },

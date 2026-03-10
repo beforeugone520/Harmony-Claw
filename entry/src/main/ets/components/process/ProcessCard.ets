@@ -1,23 +1,31 @@
 import { Process, ProcessStatus } from '../../models/Process';
-import { Colors, Typography } from '../../styles/DesignTokens';
-import { Spacing, Layout } from '../../styles/Spacing';
+import { Spacing as SP } from '../../constants';
+import { DesignTokens as DT } from '../../constants/DesignTokens';
 
 @Component
 export struct ProcessCard {
   @Prop process: Process;
 
+  private isDarkMode(): boolean {
+    try {
+      return AppStorage.get<boolean>('isSystemDarkMode') ?? false
+    } catch {
+      return false
+    }
+  }
+
   private getStatusColor(): ResourceColor {
     switch (this.process.status) {
       case ProcessStatus.RUNNING:
-        return Colors.success;
+        return DT.IOS_GREEN;
       case ProcessStatus.STOPPED:
-        return Colors.textTertiary;
+        return $r('app.color.text_tertiary');
       case ProcessStatus.ERROR:
-        return Colors.error;
+        return DT.IOS_RED;
       case ProcessStatus.PENDING:
-        return Colors.warning;
+        return DT.IOS_ORANGE;
       default:
-        return Colors.textTertiary;
+        return $r('app.color.text_tertiary');
     }
   }
 
@@ -37,47 +45,51 @@ export struct ProcessCard {
   }
 
   build() {
-    Column({ space: Spacing.md }) {
+    Column({ space: SP.M }) {
       Row() {
         // Icon
-        Column() {
-          Text('⚙️')
-            .fontSize(20)
+        Stack({ alignContent: Alignment.Center }) {
+          Circle()
+            .width(48)
+            .height(48)
+            .fill(this.isDarkMode() ? '#2C2C2E' : '#E5E5EA')
+
+          SymbolGlyph($r('sys.symbol.bolt.fill'))
+            .fontSize(22)
+            .fontColor([DT.IOS_BLUE])
         }
         .width(48)
         .height(48)
-        .backgroundColor(Colors.backgroundTertiary)
-        .borderRadius(12)
-        .justifyContent(FlexAlign.Center)
 
         // Info
-        Column({ space: Spacing.xs }) {
+        Column({ space: SP.XS }) {
           Text(this.process.name)
-            .fontSize(Typography.sizeBody)
-            .fontWeight(Typography.weightMedium)
-            .fontColor(Colors.textPrimary)
+            .fontSize(15)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('app.color.text_primary'))
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
 
           Text(`PID: ${this.process.pid}`)
-            .fontSize(Typography.sizeCaption)
-            .fontColor(Colors.textSecondary)
+            .fontSize(12)
+            .fontColor($r('app.color.text_secondary'))
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Start)
-        .margin({ left: Spacing.md })
+        .margin({ left: SP.M })
 
         // Status
-        Column({ space: Spacing.xs }) {
-          Row({ space: Spacing.xs }) {
+        Column({ space: SP.XS }) {
+          Row({ space: SP.XS }) {
             Circle()
               .width(8)
               .height(8)
               .fill(this.getStatusColor())
 
             Text(this.getStatusText())
-              .fontSize(Typography.sizeCaption)
+              .fontSize(12)
               .fontColor(this.getStatusColor())
+              .fontWeight(FontWeight.Medium)
           }
         }
         .alignItems(HorizontalAlign.End)
@@ -85,25 +97,44 @@ export struct ProcessCard {
       .width('100%')
 
       // Memory info
-      Row() {
-        Column({ space: Spacing.xs }) {
+      Row({ space: SP.L }) {
+        Column({ space: SP.XS }) {
           Text('内存')
-            .fontSize(Typography.sizeCaption)
-            .fontColor(Colors.textTertiary)
+            .fontSize(11)
+            .fontColor($r('app.color.text_tertiary'))
 
           Text(`${this.process.memory.toFixed(0)} MB`)
-            .fontSize(Typography.sizeBody)
-            .fontColor(Colors.textPrimary)
+            .fontSize(14)
+            .fontColor($r('app.color.text_primary'))
+            .fontWeight(FontWeight.Medium)
+        }
+        .layoutWeight(1)
+
+        Column({ space: SP.XS }) {
+          Text('CPU')
+            .fontSize(11)
+            .fontColor($r('app.color.text_tertiary'))
+
+          Text(`${this.process.cpu.toFixed(1)}%`)
+            .fontSize(14)
+            .fontColor($r('app.color.text_primary'))
+            .fontWeight(FontWeight.Medium)
         }
         .layoutWeight(1)
       }
       .width('100%')
+      .padding({ top: SP.S })
     }
     .width('100%')
-    .padding(Spacing.lg)
-    .backgroundColor(Colors.surfaceCard)
-    .borderRadius(12)
-    // 列表项进入动画
+    .padding(SP.L)
+    .backgroundColor(this.isDarkMode() ? '#1C1C1E' : '#FFFFFF')
+    .borderRadius(16)
+    .shadow(this.isDarkMode() ? undefined : {
+      radius: 8,
+      color: 'rgba(0,0,0,0.06)',
+      offsetX: 0,
+      offsetY: 2
+    })
     .transition(TransitionEffect.asymmetric(
       TransitionEffect.OPACITY.animation({ duration: 300, curve: Curve.EaseOut })
         .combine(TransitionEffect.translate({ y: 20 }).animation({ duration: 300, curve: Curve.EaseOut })),

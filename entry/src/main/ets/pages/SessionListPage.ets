@@ -19,10 +19,9 @@ struct SessionListPage {
   @State showDeleteDialog: boolean = false
   @State sessionToDelete: Session | null = null
   @State isRefreshing: boolean = false
-
   aboutToAppear() {
     this.viewModel.initialize().catch((e: Error) => {
-      console.error(`[SessionListPage] Failed to initialize: ${e.message}`)
+      console.error(`[SessionListPage] Failed to initialize: ${JSON.stringify(e)}`)
     })
   }
 

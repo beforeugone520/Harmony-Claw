@@ -1,5 +1,3 @@
-import { Colors } from '../styles/DesignTokens';
-
 export enum BadgeStatus {
   SUCCESS = 'success',
   WARNING = 'warning',
@@ -16,15 +14,15 @@ export struct StatusBadge {
   private getStatusColor(): ResourceColor {
     switch (this.status) {
       case BadgeStatus.SUCCESS:
-        return Colors.success;
+        return $r('app.color.success');
       case BadgeStatus.WARNING:
-        return Colors.warning;
+        return $r('app.color.warning');
       case BadgeStatus.ERROR:
-        return Colors.error;
+        return $r('app.color.error');
       case BadgeStatus.INFO:
-        return Colors.info;
+        return $r('app.color.info');
       default:
-        return Colors.textTertiary;
+        return $r('app.color.text_tertiary');
     }
   }
 
@@ -40,7 +38,6 @@ export struct StatusBadge {
         .fontColor(this.getStatusColor())
     }
     .padding(4)
-    .backgroundColor(`${this.getStatusColor()}20`)
     .borderRadius(4)
   }
 }

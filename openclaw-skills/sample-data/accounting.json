@@ -1,0 +1,89 @@
+{
+  "version": "1.0",
+  "updatedAt": 1700000000000,
+  "bills": [
+    {
+      "id": "bill_001",
+      "date": "2026-03-10",
+      "category": "餐饮",
+      "amount": 35.5,
+      "currency": "CNY",
+      "items": ["午餐"],
+      "calories": 650,
+      "note": "公司食堂",
+      "createdAt": 1700000000000
+    },
+    {
+      "id": "bill_002",
+      "date": "2026-03-10",
+      "category": "交通",
+      "amount": 12.0,
+      "currency": "CNY",
+      "items": ["地铁"],
+      "calories": 0,
+      "note": "通勤",
+      "createdAt": 1700003600000
+    },
+    {
+      "id": "bill_003",
+      "date": "2026-03-09",
+      "category": "餐饮",
+      "amount": 48.0,
+      "currency": "CNY",
+      "items": ["晚餐"],
+      "calories": 800,
+      "note": "外卖",
+      "createdAt": 1699917200000
+    },
+    {
+      "id": "bill_004",
+      "date": "2026-03-09",
+      "category": "购物",
+      "amount": 128.0,
+      "currency": "CNY",
+      "items": ["日用品"],
+      "calories": 0,
+      "note": "超市购物",
+      "createdAt": 1699920800000
+    },
+    {
+      "id": "bill_005",
+      "date": "2026-03-08",
+      "category": "娱乐",
+      "amount": 80.0,
+      "currency": "CNY",
+      "items": ["电影票"],
+      "calories": 0,
+      "note": "周末电影",
+      "createdAt": 1699834400000
+    }
+  ],
+  "dailyStats": [
+    {
+      "date": "2026-03-10",
+      "totalAmount": 47.5,
+      "totalCalories": 650,
+      "mealCount": 1
+    },
+    {
+      "date": "2026-03-09",
+      "totalAmount": 176.0,
+      "totalCalories": 800,
+      "mealCount": 1
+    },
+    {
+      "date": "2026-03-08",
+      "totalAmount": 80.0,
+      "totalCalories": 0,
+      "mealCount": 0
+    }
+  ],
+  "monthlyStats": [
+    {
+      "yearMonth": "2026-03",
+      "totalAmount": 1250.0,
+      "totalCalories": 15800,
+      "avgDailyCalories": 526
+    }
+  ]
+}

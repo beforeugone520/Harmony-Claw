@@ -1,20 +1,19 @@
-import { Colors } from '../styles/DesignTokens';
-import { Spacing } from '../styles/Spacing';
+import { Spacing as SP } from '../constants';
 
 @Component
 export struct LoadingState {
   @Prop message: string = 'Loading...';
 
   build() {
-    Column({ space: Spacing.lg }) {
+    Column({ space: SP.L }) {
       LoadingProgress()
         .width(48)
         .height(48)
-        .color(Colors.brandPrimary)
+        .color($r('app.color.brand_primary'))
 
       Text(this.message)
         .fontSize(16)
-        .fontColor(Colors.textSecondary)
+        .fontColor($r('app.color.text_secondary'))
     }
     .width('100%')
     .height('100%')

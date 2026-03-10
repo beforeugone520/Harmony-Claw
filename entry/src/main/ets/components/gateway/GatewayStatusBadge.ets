@@ -1,5 +1,4 @@
 import { GatewayStatus } from '../../models/Gateway';
-import { Colors, Typography } from '../../styles/DesignTokens';
 
 @Component
 export struct GatewayStatusBadge {
@@ -9,15 +8,15 @@ export struct GatewayStatusBadge {
   private getStatusColor(): ResourceColor {
     switch (this.status) {
       case GatewayStatus.ONLINE:
-        return Colors.success;
+        return $r('app.color.success');
       case GatewayStatus.OFFLINE:
-        return Colors.textTertiary;
+        return $r('app.color.text_tertiary');
       case GatewayStatus.ERROR:
-        return Colors.error;
+        return $r('app.color.error');
       case GatewayStatus.CONNECTING:
-        return Colors.warning;
+        return $r('app.color.warning');
       default:
-        return Colors.textTertiary;
+        return $r('app.color.text_tertiary');
     }
   }
 
@@ -45,12 +44,11 @@ export struct GatewayStatusBadge {
 
       if (this.showText) {
         Text(this.getStatusText())
-          .fontSize(Typography.sizeCaption)
+          .fontSize(12)
           .fontColor(this.getStatusColor())
       }
     }
     .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-    .backgroundColor(`${this.getStatusColor()}15`)
     .borderRadius(4)
   }
 }

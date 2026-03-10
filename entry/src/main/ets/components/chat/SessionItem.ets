@@ -1,6 +1,5 @@
 import { Session, SessionStatus } from '../../models/Session';
-import { Colors, Typography } from '../../styles/DesignTokens';
-import { Spacing } from '../../styles/Spacing';
+import { Spacing as SP } from '../../constants';
 import { DateUtils } from '../../utils/DateUtils';
 
 @Component
@@ -11,16 +10,16 @@ export struct SessionItem {
   onDelete?: () => void;
 
   private getStatusColor(): ResourceColor {
-    if (!this.session) return Colors.textTertiary;
+    if (!this.session) return $r('app.color.text_tertiary');
     switch (this.session.status) {
       case SessionStatus.ACTIVE:
-        return Colors.info;
+        return $r('app.color.info');
       case SessionStatus.CLOSED:
-        return Colors.textTertiary;
+        return $r('app.color.text_tertiary');
       case SessionStatus.ERROR:
-        return Colors.error;
+        return $r('app.color.error');
       default:
-        return Colors.textTertiary;
+        return $r('app.color.text_tertiary');
     }
   }
 
@@ -39,7 +38,7 @@ export struct SessionItem {
   }
 
   build() {
-    Row({ space: Spacing.md }) {
+    Row({ space: SP.M }) {
       // Icon
       Column() {
         Text('💬')
@@ -47,30 +46,30 @@ export struct SessionItem {
       }
       .width(48)
       .height(48)
-      .backgroundColor(Colors.backgroundTertiary)
+      .backgroundColor($r('app.color.background_tertiary'))
       .borderRadius(12)
       .justifyContent(FlexAlign.Center)
 
       // Info
-      Column({ space: Spacing.xs }) {
+      Column({ space: SP.XS }) {
         Row() {
           Text(this.session?.title || '未命名会话')
-            .fontSize(Typography.sizeBody)
-            .fontWeight(Typography.weightMedium)
-            .fontColor(Colors.textPrimary)
+            .fontSize(14)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('app.color.text_primary'))
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .layoutWeight(1)
 
           Text(this.getStatusText())
-            .fontSize(Typography.sizeCaption)
+            .fontSize(12)
             .fontColor(this.getStatusColor())
         }
         .width('100%')
 
         Text(this.session?.createdAt ? DateUtils.formatRelativeTime(this.session.createdAt) : '未知')
-          .fontSize(Typography.sizeCaption)
-          .fontColor(Colors.textTertiary)
+          .fontSize(12)
+          .fontColor($r('app.color.text_tertiary'))
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
@@ -80,7 +79,7 @@ export struct SessionItem {
         .width(32)
         .height(32)
         .backgroundColor('transparent')
-        .fontColor(Colors.textTertiary)
+        .fontColor($r('app.color.text_tertiary'))
         .fontSize(20)
         .onClick(() => {
           if (this.onDelete) {
@@ -90,12 +89,13 @@ export struct SessionItem {
     }
     .width('100%')
     .height(72)
-    .padding(Spacing.md)
-    .backgroundColor(this.isSelected ? `${Colors.brandPrimary}10` : Colors.surfaceCard)
+    .padding(SP.M)
+    .backgroundColor(this.isSelected ? $r('app.color.brand_primary') : $r('app.color.surface_card'))
+    .opacity(this.isSelected ? 0.1 : 1)
     .borderRadius(12)
     .border({
       width: this.isSelected ? 1 : 0,
-      color: Colors.brandPrimary
+      color: $r('app.color.brand_primary')
     })
     .onClick(() => {
       if (this.onItemClick) {

@@ -1,6 +1,5 @@
 import { router } from '@kit.ArkUI';
-import { Colors } from '../styles/DesignTokens';
-import { Spacing, Layout } from '../styles/Spacing';
+import { Spacing as SP } from '../constants';
 
 @Entry
 @Component
@@ -9,14 +8,14 @@ struct GatewayDetailPage {
   @State gatewayStatus: string = 'Online';
 
   build() {
-    Column({ space: Spacing.lg }) {
+    Column({ space: SP.L }) {
       // Header
       Row() {
         Button('Back')
           .width(60)
           .height(36)
-          .backgroundColor(Colors.backgroundTertiary)
-          .fontColor(Colors.textPrimary)
+          .backgroundColor($r('app.color.background_tertiary'))
+          .fontColor($r('app.color.text_primary'))
           .fontSize(14)
           .onClick(() => {
             router.back();
@@ -25,7 +24,7 @@ struct GatewayDetailPage {
         Text('Gateway Detail')
           .fontSize(18)
           .fontWeight(FontWeight.Bold)
-          .fontColor(Colors.textPrimary)
+          .fontColor($r('app.color.text_primary'))
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
 
@@ -33,51 +32,51 @@ struct GatewayDetailPage {
           .width(60)
       }
       .width('100%')
-      .height(Layout.headerHeight)
-      .padding({ left: Spacing.lg, right: Spacing.lg })
-      .backgroundColor(Colors.surfaceCard)
+      .height(56)
+      .padding({ left: SP.L, right: SP.L })
+      .backgroundColor($r('app.color.surface_card'))
 
       // Content
       Scroll() {
-        Column({ space: Spacing.lg }) {
+        Column({ space: SP.L }) {
           // Info Card
-          Column({ space: Spacing.md }) {
+          Column({ space: SP.M }) {
             Text(this.gatewayName)
               .fontSize(24)
               .fontWeight(FontWeight.Bold)
-              .fontColor(Colors.textPrimary)
+              .fontColor($r('app.color.text_primary'))
 
             Text(this.gatewayStatus)
               .fontSize(14)
-              .fontColor(Colors.success)
+              .fontColor($r('app.color.success'))
           }
           .width('100%')
-          .padding(Spacing.lg)
-          .backgroundColor(Colors.surfaceCard)
+          .padding(SP.L)
+          .backgroundColor($r('app.color.surface_card'))
           .borderRadius(12)
 
           // Actions
           Button('Connect')
             .width('100%')
             .height(48)
-            .backgroundColor(Colors.brandPrimary)
-            .fontColor(Colors.textInverse)
+            .backgroundColor($r('app.color.brand_primary'))
+            .fontColor($r('app.color.text_inverse'))
             .onClick(() => {})
 
           Button('Delete')
             .width('100%')
             .height(48)
-            .backgroundColor(Colors.error)
-            .fontColor(Colors.textInverse)
+            .backgroundColor($r('app.color.error'))
+            .fontColor($r('app.color.text_inverse'))
             .onClick(() => {})
         }
         .width('100%')
-        .padding(Spacing.lg)
+        .padding(SP.L)
       }
       .layoutWeight(1)
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(Colors.backgroundPrimary)
+    .backgroundColor($r('app.color.background_primary'))
   }
 }

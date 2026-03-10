@@ -11,6 +11,9 @@ const { exec } = require('child_process');
 const PORT = process.env.PORT || 8333;
 const OPENCLAW_HOME = process.env.OPENCLAW_HOME || require('os').homedir() + '/.openclaw';
 const AGENTS_DIR = path.join(OPENCLAW_HOME, 'agents');
+const DATA_DIR = path.join(OPENCLAW_HOME, 'data');
+const ACCOUNTING_FILE = path.join(DATA_DIR, 'accounting.json');
+const SCHEDULE_FILE = path.join(DATA_DIR, 'schedule.json');
 
 // Ensure directories exist
 if (!fs.existsSync(OPENCLAW_HOME)) {
@@ -18,6 +21,9 @@ if (!fs.existsSync(OPENCLAW_HOME)) {
 }
 if (!fs.existsSync(AGENTS_DIR)) {
   fs.mkdirSync(AGENTS_DIR, { recursive: true });
+}
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
 /**
@@ -242,6 +248,164 @@ async function getOpenClawProcesses() {
   return processes;
 }
 
+// ===== DATA FILE MANAGEMENT =====
+
+/**
+ * Initialize data files with default structure
+ */
+function initDataFiles() {
+  // Initialize accounting.json
+  if (!fs.existsSync(ACCOUNTING_FILE)) {
+    const defaultAccountingData = {
+      version: "1.0",
+      updatedAt: Date.now(),
+      bills: [],
+      dailyStats: [],
+      monthlyStats: []
+    };
+    fs.writeFileSync(ACCOUNTING_FILE, JSON.stringify(defaultAccountingData, null, 2), 'utf8');
+    console.log('[Data] Created default accounting.json');
+  }
+
+  // Initialize schedule.json
+  if (!fs.existsSync(SCHEDULE_FILE)) {
+    const defaultScheduleData = {
+      version: "1.0",
+      updatedAt: Date.now(),
+      events: [],
+      categories: ["工作", "个人", "健康", "学习", "社交", "娱乐"]
+    };
+    fs.writeFileSync(SCHEDULE_FILE, JSON.stringify(defaultScheduleData, null, 2), 'utf8');
+    console.log('[Data] Created default schedule.json');
+  }
+}
+
+/**
+ * Read accounting data from file
+ */
+function readAccountingData() {
+  try {
+    if (!fs.existsSync(ACCOUNTING_FILE)) {
+      initDataFiles();
+    }
+    const data = fs.readFileSync(ACCOUNTING_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('[Data] Error reading accounting data:', error);
+    return { version: "1.0", updatedAt: Date.now(), bills: [], dailyStats: [], monthlyStats: [] };
+  }
+}
+
+/**
+ * Write accounting data to file
+ */
+function writeAccountingData(data) {
+  try {
+    data.updatedAt = Date.now();
+    fs.writeFileSync(ACCOUNTING_FILE, JSON.stringify(data, null, 2), 'utf8');
+    return true;
+  } catch (error) {
+    console.error('[Data] Error writing accounting data:', error);
+    return false;
+  }
+}
+
+/**
+ * Read schedule data from file
+ */
+function readScheduleData() {
+  try {
+    if (!fs.existsSync(SCHEDULE_FILE)) {
+      initDataFiles();
+    }
+    const data = fs.readFileSync(SCHEDULE_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('[Data] Error reading schedule data:', error);
+    return { version: "1.0", updatedAt: Date.now(), events: [], categories: ["工作", "个人", "健康", "学习", "社交", "娱乐"] };
+  }
+}
+
+/**
+ * Write schedule data to file
+ */
+function writeScheduleData(data) {
+  try {
+    data.updatedAt = Date.now();
+    fs.writeFileSync(SCHEDULE_FILE, JSON.stringify(data, null, 2), 'utf8');
+    return true;
+  } catch (error) {
+    console.error('[Data] Error writing schedule data:', error);
+    return false;
+  }
+}
+
+/**
+ * Generate unique ID
+ */
+function generateId(prefix) {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * Calculate accounting statistics
+ */
+function calculateAccountingStats(data) {
+  const bills = data.bills || [];
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  // Daily stats - group by date
+  const dailyMap = new Map();
+  bills.forEach(bill => {
+    const date = bill.date;
+    if (!dailyMap.has(date)) {
+      dailyMap.set(date, { date, totalAmount: 0, totalCalories: 0, billCount: 0 });
+    }
+    const stat = dailyMap.get(date);
+    stat.totalAmount += bill.amount || 0;
+    stat.totalCalories += bill.calories || 0;
+    stat.billCount += 1;
+  });
+  const dailyStats = Array.from(dailyMap.values()).sort((a, b) => b.date.localeCompare(a.date));
+
+  // Monthly stats - group by year-month
+  const monthlyMap = new Map();
+  bills.forEach(bill => {
+    const date = new Date(bill.date);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    if (!monthlyMap.has(key)) {
+      monthlyMap.set(key, { month: key, totalAmount: 0, totalCalories: 0, billCount: 0 });
+    }
+    const stat = monthlyMap.get(key);
+    stat.totalAmount += bill.amount || 0;
+    stat.totalCalories += bill.calories || 0;
+    stat.billCount += 1;
+  });
+  const monthlyStats = Array.from(monthlyMap.values()).sort((a, b) => b.month.localeCompare(a.month));
+
+  return { daily: dailyStats, monthly: monthlyStats };
+}
+
+/**
+ * Parse request body
+ */
+function parseBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch (e) {
+        reject(e);
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
 /**
  * Request handler
  */
@@ -430,6 +594,111 @@ async function handleRequest(req, res) {
     return;
   }
 
+  // ===== DATA ENDPOINTS =====
+
+  // GET /api/v1/data/accounting - Get accounting data
+  if (pathname === '/api/v1/data/accounting' && method === 'GET') {
+    const data = readAccountingData();
+    sendJSON(res, { data, code: 200 });
+    return;
+  }
+
+  // POST /api/v1/data/accounting - Add bill
+  if (pathname === '/api/v1/data/accounting' && method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const data = readAccountingData();
+
+      const newBill = {
+        id: generateId('bill'),
+        date: body.date || new Date().toISOString().split('T')[0],
+        category: body.category || '其他',
+        amount: body.amount || 0,
+        currency: body.currency || 'CNY',
+        items: body.items || [],
+        calories: body.calories || 0,
+        note: body.note || '',
+        createdAt: Date.now()
+      };
+
+      data.bills.push(newBill);
+      writeAccountingData(data);
+
+      sendJSON(res, { data: newBill, code: 200 });
+    } catch (error) {
+      sendJSON(res, { error: 'Invalid request body', message: error.message, code: 400 }, 400);
+    }
+    return;
+  }
+
+  // GET /api/v1/data/accounting/stats - Get accounting statistics
+  if (pathname === '/api/v1/data/accounting/stats' && method === 'GET') {
+    const data = readAccountingData();
+    const stats = calculateAccountingStats(data);
+    sendJSON(res, { data: stats, code: 200 });
+    return;
+  }
+
+  // GET /api/v1/data/schedule - Get schedule data
+  if (pathname === '/api/v1/data/schedule' && method === 'GET') {
+    const data = readScheduleData();
+    sendJSON(res, { data, code: 200 });
+    return;
+  }
+
+  // POST /api/v1/data/schedule - Add event
+  if (pathname === '/api/v1/data/schedule' && method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const data = readScheduleData();
+
+      const newEvent = {
+        id: generateId('event'),
+        title: body.title || '未命名事件',
+        description: body.description || '',
+        startTime: body.startTime || Date.now(),
+        endTime: body.endTime || Date.now() + 3600000,
+        location: body.location || '',
+        category: body.category || '个人',
+        isAllDay: body.isAllDay || false,
+        recurrence: body.recurrence || null,
+        reminder: body.reminder || 15,
+        syncedToCalendar: false,
+        createdAt: Date.now()
+      };
+
+      data.events.push(newEvent);
+      writeScheduleData(data);
+
+      sendJSON(res, { data: newEvent, code: 200 });
+    } catch (error) {
+      sendJSON(res, { error: 'Invalid request body', message: error.message, code: 400 }, 400);
+    }
+    return;
+  }
+
+  // POST /api/v1/data/schedule/:id/sync - Mark event as synced
+  const scheduleSyncMatch = pathname.match(/^\/api\/v1\/data\/schedule\/([^\/]+)\/sync$/);
+  if (scheduleSyncMatch && method === 'POST') {
+    const eventId = scheduleSyncMatch[1];
+    const data = readScheduleData();
+
+    const eventIndex = data.events.findIndex(e => e.id === eventId);
+    if (eventIndex === -1) {
+      sendJSON(res, { error: 'Event not found', code: 404 }, 404);
+      return;
+    }
+
+    data.events[eventIndex].syncedToCalendar = true;
+    writeScheduleData(data);
+
+    sendJSON(res, {
+      data: { success: true, eventId: eventId, syncedToCalendar: true },
+      code: 200
+    });
+    return;
+  }
+
   // 404
   sendJSON(res, { error: 'Not found', path: pathname }, 404);
 }
@@ -438,12 +707,16 @@ async function handleRequest(req, res) {
 const server = http.createServer(handleRequest);
 
 server.listen(PORT, () => {
+  // Initialize data files
+  initDataFiles();
+
   console.log(`
 ╔════════════════════════════════════════════════════════╗
 ║         OpenClaw Bridge Server                         ║
 ║                                                        ║
 ║  Port:        ${PORT}                                    ║
 ║  Agents Dir:  ${AGENTS_DIR}  ║
+║  Data Dir:    ${DATA_DIR}  ║
 ║                                                        ║
 ║  Endpoints:                                            ║
 ║    GET  /api/v1/health                                 ║
@@ -452,10 +725,18 @@ server.listen(PORT, () => {
 ║    GET  /api/v1/agents/:id/status                      ║
 ║    GET  /api/v1/agents/:id/metrics                     ║
 ║    POST /api/v1/agents/:id/send                        ║
-║    GET  /api/v1/processes           (NEW!)             ║
-║    GET  /api/v1/processes/:id       (NEW!)             ║
-║    POST /api/v1/processes/:id/restart (NEW!)           ║
-║    DELETE /api/v1/processes/:id/terminate (NEW!)       ║
+║    GET  /api/v1/processes                              ║
+║    GET  /api/v1/processes/:id                          ║
+║    POST /api/v1/processes/:id/restart                  ║
+║    DELETE /api/v1/processes/:id/terminate              ║
+║                                                        ║
+║  Data Endpoints:                                       ║
+║    GET  /api/v1/data/accounting                        ║
+║    POST /api/v1/data/accounting                        ║
+║    GET  /api/v1/data/accounting/stats                  ║
+║    GET  /api/v1/data/schedule                          ║
+║    POST /api/v1/data/schedule                          ║
+║    POST /api/v1/data/schedule/:id/sync                 ║
 ║                                                        ║
 ╚════════════════════════════════════════════════════════╝
   `);

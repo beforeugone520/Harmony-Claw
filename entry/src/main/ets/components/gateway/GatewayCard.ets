@@ -1,6 +1,6 @@
 import { Gateway, GatewayStatus } from '../../models/Gateway';
-import { Colors, Typography } from '../../styles/DesignTokens';
-import { Spacing } from '../../styles/Spacing';
+import { Spacing as SP } from '../../constants';
+import { DesignTokens as DT } from '../../constants/DesignTokens';
 import { DateUtils } from '../../utils/DateUtils';
 import { promptAction } from '@kit.ArkUI';
 
@@ -15,6 +15,14 @@ export struct GatewayCard {
   onConnect?: () => void;
   onDelete?: () => void;
 
+  private isDarkMode(): boolean {
+    try {
+      return AppStorage.get<boolean>('isSystemDarkMode') ?? false
+    } catch {
+      return false
+    }
+  }
+
   private showDeleteConfirm(): void {
     promptAction.showDialog({
       title: '确认删除网关',
@@ -22,38 +30,35 @@ export struct GatewayCard {
       buttons: [
         {
           text: '取消',
-          color: '#999999'
+          color: '#8E8E93'
         },
         {
           text: '删除',
-          color: '#FF4D4F'
+          color: DT.IOS_RED
         }
       ]
     }).then((result: DialogResult) => {
       if (result.index === 1) {
-        // 用户点击了"删除"
         if (this.onDelete) {
           this.onDelete();
         }
       }
-    }).catch(() => {
-      // 用户取消了对话框
-    });
+    }).catch(() => {});
   }
 
   private getStatusColor(): ResourceColor {
-    if (!this.gateway) return Colors.textTertiary;
+    if (!this.gateway) return $r('app.color.text_tertiary');
     switch (this.gateway.status) {
       case GatewayStatus.ONLINE:
-        return Colors.success;
+        return DT.IOS_GREEN;
       case GatewayStatus.OFFLINE:
-        return Colors.textTertiary;
+        return $r('app.color.text_tertiary');
       case GatewayStatus.ERROR:
-        return Colors.error;
+        return DT.IOS_RED;
       case GatewayStatus.CONNECTING:
-        return Colors.warning;
+        return DT.IOS_ORANGE;
       default:
-        return Colors.textTertiary;
+        return $r('app.color.text_tertiary');
     }
   }
 
@@ -74,110 +79,120 @@ export struct GatewayCard {
   }
 
   build() {
-    Column({ space: Spacing.md }) {
+    Column({ space: SP.M }) {
       Row() {
         // Icon
-        Column() {
-          Text('G')
-            .fontSize(24)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(Colors.textInverse)
+        Stack({ alignContent: Alignment.Center }) {
+          Circle()
+            .width(48)
+            .height(48)
+            .fill(DT.IOS_BLUE + '20')
+
+          SymbolGlyph($r('sys.symbol.icloud'))
+            .fontSize(22)
+            .fontColor([DT.IOS_BLUE])
         }
         .width(48)
         .height(48)
-        .backgroundColor(Colors.brandPrimary)
-        .borderRadius(12)
-        .justifyContent(FlexAlign.Center)
 
         // Info
-        Column({ space: Spacing.xs }) {
+        Column({ space: SP.XS }) {
           Text(this.gateway?.name || '未命名')
-            .fontSize(Typography.sizeBody)
-            .fontWeight(Typography.weightMedium)
-            .fontColor(Colors.textPrimary)
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('app.color.text_primary'))
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
 
           Text(`${this.gateway?.host || 'unknown'}:${this.gateway?.port || 0}`)
-            .fontSize(Typography.sizeCaption)
-            .fontColor(Colors.textSecondary)
+            .fontSize(13)
+            .fontColor($r('app.color.text_secondary'))
 
           Text(`v${this.gateway?.version || '1.0'}`)
-            .fontSize(Typography.sizeOverline)
-            .fontColor(Colors.textTertiary)
+            .fontSize(11)
+            .fontColor($r('app.color.text_tertiary'))
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Start)
-        .margin({ left: Spacing.md })
+        .margin({ left: SP.M })
 
         // Status
-        Column({ space: Spacing.xs }) {
-          Row({ space: Spacing.xs }) {
+        Column({ space: SP.XS }) {
+          Row({ space: SP.XS }) {
             Circle()
               .width(8)
               .height(8)
               .fill(this.getStatusColor())
 
             Text(this.getStatusText())
-              .fontSize(Typography.sizeCaption)
+              .fontSize(12)
               .fontColor(this.getStatusColor())
+              .fontWeight(FontWeight.Medium)
           }
 
           Text(this.gateway?.lastSeen ? DateUtils.formatRelativeTime(this.gateway.lastSeen) : '未知')
-            .fontSize(Typography.sizeOverline)
-            .fontColor(Colors.textTertiary)
+            .fontSize(11)
+            .fontColor($r('app.color.text_tertiary'))
         }
         .alignItems(HorizontalAlign.End)
       }
       .width('100%')
 
       // Actions
-      Row({ space: Spacing.md }) {
+      Row({ space: SP.M }) {
         if (this.gateway?.status === GatewayStatus.ONLINE) {
-          Button(this.isSelected ? '已连接' : '连接')
+          Button(this.isSelected ? '已连接' : '连接', { type: ButtonType.Capsule })
             .layoutWeight(1)
             .height(36)
-            .backgroundColor(this.isSelected ? Colors.success : Colors.brandPrimary)
-            .fontSize(Typography.sizeSmall)
+            .fontSize(13)
+            .fontColor(this.isSelected ? '#FFFFFF' : '#FFFFFF')
+            .backgroundColor(this.isSelected ? DT.IOS_GREEN : DT.IOS_BLUE)
             .enabled(!this.isSelected)
-            .onClick(() => {
+            .onClick((): void => {
               if (this.onConnect) {
                 this.onConnect();
               }
             })
         } else {
-          Button('刷新状态')
+          Button('刷新状态', { type: ButtonType.Capsule })
             .layoutWeight(1)
             .height(36)
-            .backgroundColor(Colors.warning)
-            .fontSize(Typography.sizeSmall)
-            .onClick(() => {
+            .fontSize(13)
+            .fontColor('#FFFFFF')
+            .backgroundColor(DT.IOS_ORANGE)
+            .onClick((): void => {
               if (this.onConnect) {
                 this.onConnect();
               }
             })
         }
 
-        Button('删除')
-          .width(80)
+        Button('删除', { type: ButtonType.Capsule })
+          .width(70)
           .height(36)
-          .backgroundColor(Colors.backgroundTertiary)
-          .fontColor(Colors.error)
-          .fontSize(Typography.sizeSmall)
-          .onClick(() => {
+          .fontSize(13)
+          .fontColor(DT.IOS_RED)
+          .backgroundColor(DT.IOS_RED + '15')
+          .onClick((): void => {
             this.showDeleteConfirm();
           })
       }
       .width('100%')
-      .margin({ top: Spacing.sm })
+      .margin({ top: SP.S })
     }
     .width('100%')
-    .padding(Spacing.lg)
-    .backgroundColor(Colors.surfaceCard)
-    .borderRadius(12)
+    .padding(SP.L)
+    .backgroundColor(this.isDarkMode() ? '#1C1C1E' : '#FFFFFF')
+    .borderRadius(16)
     .border({
       width: this.isSelected ? 2 : 0,
-      color: Colors.brandPrimary
+      color: DT.IOS_BLUE
+    })
+    .shadow(this.isDarkMode() ? undefined : {
+      radius: 8,
+      color: 'rgba(0,0,0,0.06)',
+      offsetX: 0,
+      offsetY: 2
     })
   }
 }

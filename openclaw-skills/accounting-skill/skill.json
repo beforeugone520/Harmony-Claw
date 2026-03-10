@@ -1,0 +1,95 @@
+{
+  "id": "accounting-skill",
+  "name": "记账热量管理",
+  "version": "1.0.0",
+  "description": "记录账单和食品热量，提供统计分析",
+  "author": "OpenClaw",
+  "tools": [
+    {
+      "name": "write_bill",
+      "description": "记录一笔账单，包含金额、类别、热量等信息",
+      "entry": "tools/write_bill.py",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "账单日期，格式 YYYY-MM-DD"
+          },
+          "category": {
+            "type": "string",
+            "description": "消费类别，如：餐饮、交通、购物、娱乐、医疗、教育等",
+            "enum": ["餐饮", "交通", "购物", "娱乐", "医疗", "教育", "其他"]
+          },
+          "amount": {
+            "type": "number",
+            "description": "消费金额"
+          },
+          "currency": {
+            "type": "string",
+            "description": "货币类型",
+            "default": "CNY"
+          },
+          "items": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "消费项目列表"
+          },
+          "calories": {
+            "type": "number",
+            "description": "食物热量（大卡），仅餐饮类需要",
+            "default": 0
+          },
+          "note": {
+            "type": "string",
+            "description": "备注信息",
+            "default": ""
+          }
+        },
+        "required": ["date", "category", "amount"]
+      }
+    },
+    {
+      "name": "read_bills",
+      "description": "读取账单记录，支持日期范围筛选",
+      "entry": "tools/read_bills.py",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "description": "开始日期，格式 YYYY-MM-DD"
+          },
+          "endDate": {
+            "type": "string",
+            "description": "结束日期，格式 YYYY-MM-DD"
+          },
+          "category": {
+            "type": "string",
+            "description": "按类别筛选（可选）"
+          }
+        },
+        "required": ["startDate", "endDate"]
+      }
+    },
+    {
+      "name": "get_stats",
+      "description": "获取统计信息，包括日统计和月统计",
+      "entry": "tools/read_stats.py",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "string",
+            "description": "统计周期",
+            "enum": ["week", "month", "year"],
+            "default": "month"
+          }
+        }
+      }
+    }
+  ],
+  "dataPath": "~/.openclaw/data/accounting.json",
+  "promptPath": "prompts/accounting.md",
+  "supportedAgents": ["accounting-bot"]
+}

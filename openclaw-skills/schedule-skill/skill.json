@@ -1,0 +1,100 @@
+{
+  "id": "schedule-skill",
+  "name": "日程管理",
+  "version": "1.0.0",
+  "description": "记录日程安排，支持日历同步",
+  "author": "OpenClaw",
+  "tools": [
+    {
+      "name": "write_event",
+      "description": "添加一条日程安排",
+      "entry": "tools/write_event.py",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "事件标题"
+          },
+          "description": {
+            "type": "string",
+            "description": "事件描述",
+            "default": ""
+          },
+          "startTime": {
+            "type": "number",
+            "description": "开始时间，Unix时间戳（毫秒）"
+          },
+          "endTime": {
+            "type": "number",
+            "description": "结束时间，Unix时间戳（毫秒）"
+          },
+          "location": {
+            "type": "string",
+            "description": "地点",
+            "default": ""
+          },
+          "category": {
+            "type": "string",
+            "description": "事件类别",
+            "enum": ["工作", "个人", "健康", "学习", "社交", "娱乐"],
+            "default": "个人"
+          },
+          "isAllDay": {
+            "type": "boolean",
+            "description": "是否为全天事件",
+            "default": false
+          },
+          "recurrence": {
+            "type": "string",
+            "description": "重复规则，如：daily, weekly, monthly",
+            "default": null
+          },
+          "reminder": {
+            "type": "number",
+            "description": "提前提醒时间（分钟）",
+            "default": 15
+          }
+        },
+        "required": ["title", "startTime", "endTime"]
+      }
+    },
+    {
+      "name": "read_events",
+      "description": "读取日程列表",
+      "entry": "tools/read_events.py",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "日期，格式 YYYY-MM-DD"
+          },
+          "includePast": {
+            "type": "boolean",
+            "description": "是否包含过去的日程",
+            "default": false
+          }
+        }
+      }
+    },
+    {
+      "name": "mark_synced",
+      "description": "标记日程已同步到系统日历",
+      "entry": "tools/mark_synced.py",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "description": "事件ID"
+          }
+        },
+        "required": ["eventId"]
+      }
+    }
+  ],
+  "dataPath": "~/.openclaw/data/schedule.json",
+  "promptPath": "prompts/schedule.md",
+  "supportedAgents": ["note-bot"]
+}

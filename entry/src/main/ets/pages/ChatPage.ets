@@ -5,8 +5,7 @@ import { ChatInput } from '../components/chat/ChatInput';
 import { SessionItem } from '../components/chat/SessionItem';
 import { Message } from '../models/Message';
 import { Session } from '../models/Session';
-import { Colors, Typography } from '../styles/DesignTokens';
-import { Spacing, Layout } from '../styles/Spacing';
+import { Spacing as SP } from '../constants';
 import { LoadingState } from '../components/LoadingState';
 import { EmptyState } from '../components/EmptyState';
 
@@ -17,7 +16,6 @@ struct ChatPage {
   @State showNewSessionDialog: boolean = false;
   @State newSessionTitle: string = '';
   private listScroller: ListScroller = new ListScroller();
-
   aboutToAppear() {
     console.log('[ChatPage] aboutToAppear called');
     this.viewModel.initialize().catch((e: Error) => {
@@ -25,7 +23,7 @@ struct ChatPage {
     });
   }
 
-  private async handleSendMessage(text: string) {
+  private async handleSendMessage(text: string): Promise<void> {
     try {
       if (!this.viewModel.currentSession) {
         const session = await this.viewModel.createSession('新会话');
@@ -39,7 +37,7 @@ struct ChatPage {
     }
   }
 
-  private async handleCreateSession() {
+  private async handleCreateSession(): Promise<void> {
     try {
       const session = await this.viewModel.createSession(this.newSessionTitle || undefined);
       if (session) {
@@ -54,40 +52,40 @@ struct ChatPage {
 
   @Builder
   NewSessionDialog() {
-    Column({ space: Spacing.lg }) {
+    Column({ space: SP.L }) {
       Text('新建会话')
-        .fontSize(Typography.sizeH3)
-        .fontWeight(Typography.weightBold)
-        .fontColor(Colors.textPrimary)
+        .fontSize(18)
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.text_primary'))
 
       TextInput({ placeholder: '会话标题 (可选)', text: $$this.newSessionTitle })
         .width('100%')
         .height(44)
-        .placeholderColor(Colors.textTertiary)
-        .backgroundColor(Colors.backgroundTertiary)
+        .placeholderColor($r('app.color.text_tertiary'))
+        .backgroundColor($r('app.color.background_tertiary'))
         .borderRadius(8)
 
-      Row({ space: Spacing.md }) {
+      Row({ space: SP.M }) {
         Button('取消')
           .layoutWeight(1)
           .height(44)
-          .backgroundColor(Colors.backgroundTertiary)
-          .fontColor(Colors.textPrimary)
-          .onClick(() => {
+          .backgroundColor($r('app.color.background_tertiary'))
+          .fontColor($r('app.color.text_primary'))
+          .onClick((): void => {
             this.showNewSessionDialog = false;
           })
 
         Button('创建')
           .layoutWeight(1)
           .height(44)
-          .backgroundColor(Colors.brandPrimary)
-          .onClick(() => this.handleCreateSession())
+          .backgroundColor($r('app.color.brand_primary'))
+          .onClick(() => { this.handleCreateSession().catch((e: Error) => console.error(JSON.stringify(e))); })
       }
       .width('100%')
     }
     .width('80%')
-    .padding(Spacing.lg)
-    .backgroundColor(Colors.surfaceCard)
+    .padding(SP.L)
+    .backgroundColor($r('app.color.surface_card'))
     .borderRadius(16)
   }
 
@@ -97,9 +95,9 @@ struct ChatPage {
         // Header
         Row() {
           Text(this.viewModel.currentSession?.title || '对话中心')
-            .fontSize(Typography.sizeH3)
-            .fontWeight(Typography.weightBold)
-            .fontColor(Colors.textPrimary)
+            .fontSize(18)
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.text_primary'))
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .layoutWeight(1)
@@ -107,28 +105,28 @@ struct ChatPage {
           Button('+')
             .width(40)
             .height(40)
-            .backgroundColor(Colors.brandPrimary)
-            .fontColor(Colors.textInverse)
+            .backgroundColor($r('app.color.brand_primary'))
+            .fontColor($r('app.color.text_inverse'))
             .fontSize(24)
-            .onClick(() => {
+            .onClick((): void => {
               this.showNewSessionDialog = true;
             })
         }
         .width('100%')
-        .height(Layout.headerHeight)
-        .padding({ left: Spacing.lg, right: Spacing.lg })
-        .backgroundColor(Colors.backgroundSecondary)
+        .height(56)
+        .padding({ left: SP.L, right: SP.L })
+        .backgroundColor($r('app.color.background_secondary'))
 
         // Session List (Horizontal)
         if (this.viewModel.sessions.length > 0) {
-          List({ space: Spacing.sm }) {
+          List({ space: SP.S }) {
             ForEach(this.viewModel.sessions, (session: Session) => {
               ListItem() {
-                Column({ space: Spacing.xs }) {
+                Column({ space: SP.XS }) {
                   Text(session.title || '未命名')
-                    .fontSize(Typography.sizeSmall)
+                    .fontSize(12)
                     .fontColor(this.viewModel.currentSession?.id === session.id ?
-                      Colors.brandPrimary : Colors.textSecondary)
+                      $r('app.color.brand_primary') : $r('app.color.text_secondary'))
                     .maxLines(1)
                     .textOverflow({ overflow: TextOverflow.Ellipsis })
                     .width(80)
@@ -137,10 +135,10 @@ struct ChatPage {
                     Divider()
                       .width(40)
                       .height(2)
-                      .color(Colors.brandPrimary)
+                      .color($r('app.color.brand_primary'))
                   }
                 }
-                .padding(Spacing.sm)
+                .padding(SP.S)
                 .onClick(() => {
                   this.viewModel.selectSession(session);
                 })
@@ -149,9 +147,9 @@ struct ChatPage {
           }
           .width('100%')
           .height(50)
-          .padding({ left: Spacing.md, right: Spacing.md })
+          .padding({ left: SP.M, right: SP.M })
           .listDirection(Axis.Horizontal)
-          .backgroundColor(Colors.backgroundSecondary)
+          .backgroundColor($r('app.color.background_secondary'))
         }
 
         // Message List
@@ -163,7 +161,7 @@ struct ChatPage {
             message: '输入消息开始与 AI 对话'
           })
         } else {
-          List({ scroller: this.listScroller, space: Spacing.md }) {
+          List({ scroller: this.listScroller, space: SP.M }) {
             ForEach(this.viewModel.messages, (message: Message) => {
               ListItem() {
                 MessageBubble({ message: message })
@@ -172,7 +170,7 @@ struct ChatPage {
           }
           .width('100%')
           .layoutWeight(1)
-          .padding({ top: Spacing.md, bottom: Spacing.md })
+          .padding({ top: SP.M, bottom: SP.M })
         }
 
         // Input
@@ -182,7 +180,7 @@ struct ChatPage {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor(Colors.backgroundPrimary)
+      .backgroundColor($r('app.color.background_primary'))
 
       // New Session Dialog
       if (this.showNewSessionDialog) {
@@ -191,7 +189,7 @@ struct ChatPage {
         }
         .width('100%')
         .height('100%')
-        .backgroundColor('rgba(0,0,0,0.5)')
+        .backgroundColor($r('app.color.overlay_light'))
         .justifyContent(FlexAlign.Center)
       }
     }
