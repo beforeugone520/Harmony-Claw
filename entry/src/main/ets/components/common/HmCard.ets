@@ -11,8 +11,12 @@ export struct HmCard {
   @Prop cardBorderRadius: number = SP.RADIUS_L
   @Prop cardClickable: boolean = false
   onCardClick?: () => void
+  @BuilderParam cardContent: () => void = HmCard.emptyBuilder
 
-  @BuilderParam cardContent: () => void
+  @Builder
+  static emptyBuilder() {
+    // 默认空内容
+  }
 
   build() {
     Column() {
