@@ -14,10 +14,16 @@ interface ErrorWithCode {
 export class HttpService {
   private baseUrl: string = '';
   private timeout: number = 10000;
+  private authToken: string = '';
 
   setBaseUrl(url: string): void {
     console.log(`[HttpService] Base URL set to: ${url}`);
     this.baseUrl = url;
+  }
+
+  setAuthToken(token: string): void {
+    console.log(`[HttpService] Auth token set`);
+    this.authToken = token;
   }
 
   getBaseUrl(): string {
@@ -58,12 +64,17 @@ export class HttpService {
         }
       }
 
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+      if (this.authToken) {
+        headers['Authorization'] = `Bearer ${this.authToken}`;
+      }
+
       httpRequest.request(url, {
         method: http.RequestMethod.GET,
-        header: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        header: headers,
         connectTimeout: this.timeout,
         readTimeout: this.timeout
       }, (err, data) => {
@@ -96,12 +107,17 @@ export class HttpService {
         return;
       }
 
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+      if (this.authToken) {
+        headers['Authorization'] = `Bearer ${this.authToken}`;
+      }
+
       httpRequest.request(url, {
         method: http.RequestMethod.POST,
-        header: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        header: headers,
         extraData: JSON.stringify(body),
         connectTimeout: this.timeout,
         readTimeout: this.timeout
@@ -126,12 +142,17 @@ export class HttpService {
       const httpRequest = http.createHttp();
       const url = this.buildUrl(path);
 
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+      if (this.authToken) {
+        headers['Authorization'] = `Bearer ${this.authToken}`;
+      }
+
       httpRequest.request(url, {
         method: http.RequestMethod.DELETE,
-        header: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        header: headers,
         connectTimeout: this.timeout,
         readTimeout: this.timeout
       }, (err, data) => {
