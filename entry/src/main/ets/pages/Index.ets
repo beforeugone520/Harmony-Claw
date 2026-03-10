@@ -29,15 +29,23 @@ struct Index {
   @State headerBlurStyle: BlurStyle = BlurStyle.NONE
 
   aboutToAppear() {
-    this.gatewayViewModel.initialize().catch((e: Error) => {
-      console.error(`[Index] Failed to initialize gatewayViewModel: ${JSON.stringify(e)}`);
-    });
-    this.processViewModel.initialize().catch((e: Error) => {
-      console.error(`[Index] Failed to initialize processViewModel: ${JSON.stringify(e)}`);
-    });
-    this.agentViewModel.initialize().catch((e: Error) => {
-      console.error(`[Index] Failed to initialize agentViewModel: ${JSON.stringify(e)}`);
-    });
+    this.initializeViewModels();
+  }
+
+  private async initializeViewModels(): Promise<void> {
+    try {
+      await this.gatewayViewModel.initialize();
+      await this.processViewModel.initialize();
+
+      // If there's a current gateway, set it for agent view model
+      if (this.gatewayViewModel.currentGateway) {
+        await this.agentViewModel.setGateway(this.gatewayViewModel.currentGateway);
+      } else {
+        await this.agentViewModel.initialize();
+      }
+    } catch (e) {
+      console.error(`[Index] Failed to initialize view models: ${JSON.stringify(e)}`);
+    }
   }
 
   // Scroller for dashboard
@@ -253,6 +261,37 @@ struct Index {
   AgentsContent() {
     Scroll() {
       Column({ space: SP.L }) {
+        // 网关连接状态提示
+        if (!this.agentViewModel.currentGateway) {
+          Row() {
+            Text('⚠️ 请先连接网关以查看 Agents')
+              .fontSize(14)
+              .fontColor(DT.WARNING)
+              .fontWeight(FontWeight.Medium)
+          }
+          .width('100%')
+          .padding(SP.M)
+          .backgroundColor('#FFF8E1')
+          .borderRadius(SP.RADIUS_M)
+          .margin({ left: SP.L, right: SP.L, top: SP.L })
+          .onClick(() => {
+            this.selectedTabIndex = 1 // 切换到网关标签
+          })
+        } else {
+          Row() {
+            Text(`已连接: ${this.agentViewModel.currentGateway.name}`)
+              .fontSize(12)
+              .fontColor(DT.SUCCESS)
+            Blank()
+            Text(`${this.agentViewModel.currentGateway.host}:${this.agentViewModel.currentGateway.port}`)
+              .fontSize(12)
+              .fontColor(DT.LIGHT_TEXT_TERTIARY)
+          }
+          .width('100%')
+          .padding({ left: SP.M, right: SP.M })
+          .margin({ left: SP.L, right: SP.L, top: SP.L })
+        }
+
         // Agent 统计
         Row({ space: SP.M }) {
           Column({ space: SP.XS }) {
@@ -311,6 +350,7 @@ struct Index {
             .fontSize(12)
             .fontColor(DT.BRAND_PRIMARY)
             .backgroundColor('transparent')
+            .enabled(!this.agentViewModel.isLoading && this.agentViewModel.currentGateway !== null)
             .onClick(() => {
               this.agentViewModel.refresh()
             })

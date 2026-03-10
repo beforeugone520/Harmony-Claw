@@ -20,13 +20,30 @@ export class ProcessRepository {
   async getProcessDetail(id: string): Promise<Process | null> {
     try {
       const response = await this.http.get<Process>(`${ApiEndpoints.PROCESSES}/${id}`);
-      if (response.code === 200) {
+      if (response.code === 200 && response.data) {
         return response.data;
       }
     } catch (e) {
-      // Return null on error
+      console.error(`[ProcessRepository] Failed to get process detail for ${id}:`, e);
     }
-    return null;
+    // Return mock data for the specific ID if API fails
+    return this.getMockProcessById(id);
+  }
+
+  async restartProcess(id: string): Promise<boolean> {
+    try {
+      const path = `${ApiEndpoints.PROCESSES}/${id}/restart`;
+      const response = await this.http.post<Process>(path, {});
+      return response.code === 200;
+    } catch (e) {
+      console.error(`[ProcessRepository] Failed to restart process ${id}:`, e);
+      return false;
+    }
+  }
+
+  private getMockProcessById(id: string): Process | null {
+    const allProcesses = this.getMockProcesses();
+    return allProcesses.find(p => p.id === id) || null;
   }
 
   async terminateProcess(id: string): Promise<boolean> {

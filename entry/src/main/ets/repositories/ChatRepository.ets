@@ -112,15 +112,51 @@ export class ChatRepository {
       await this.http.delete<Session>(`${ApiEndpoints.CHAT_SESSIONS}/${sessionId}`);
     } catch (e) {
       // Delete from local storage
-      const sessions = await this.storage.loadSessions();
-      const filtered: Session[] = [];
-      for (let i = 0; i < sessions.length; i++) {
-        if (sessions[i].id !== sessionId) {
-          filtered.push(sessions[i]);
-        }
-      }
-      await this.storage.saveSessions(filtered);
     }
+    // Delete from local storage
+    const sessions = await this.storage.loadSessions();
+    const filtered = sessions.filter(s => s.id !== sessionId);
+    await this.storage.saveSessions(filtered);
+
+    // Also delete associated messages
+    await this.clearSessionMessages(sessionId);
+  }
+
+  // ===== Local Message Storage =====
+
+  async saveMessage(message: Message): Promise<void> {
+    const messages = await this.getAllMessages();
+    messages.push(message);
+    await this.storage.setObject('messages', messages);
+  }
+
+  async getAllMessages(): Promise<Message[]> {
+    return await this.storage.getObject<Message[]>('messages', []);
+  }
+
+  async clearSessionMessages(sessionId: string): Promise<void> {
+    const messages = await this.getAllMessages();
+    const filtered = messages.filter(m => m.sessionId !== sessionId);
+    await this.storage.setObject('messages', filtered);
+  }
+
+  async markMessagesAsRead(sessionId: string): Promise<void> {
+    const messages = await this.getAllMessages();
+    let updated = false;
+    for (const msg of messages) {
+      if (msg.sessionId === sessionId && !msg.isRead && msg.sender !== 'user') {
+        msg.isRead = true;
+        updated = true;
+      }
+    }
+    if (updated) {
+      await this.storage.setObject('messages', messages);
+    }
+  }
+
+  async getUnreadCount(sessionId: string): Promise<number> {
+    const messages = await this.getMessages(sessionId);
+    return messages.filter(m => !m.isRead && m.sender !== 'user').length;
   }
 }
 

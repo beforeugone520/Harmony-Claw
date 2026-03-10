@@ -1,124 +1,102 @@
-import { Agent, AgentStatus, AgentType, AgentSession, AgentMessage, AgentIdentity, AgentTools, AgentMetrics } from '../models/Agent';
-import { getHttpService } from '../services/HttpService';
+import { Agent, AgentStatus, AgentType, AgentSession, AgentMessage, AgentMetrics } from '../models/Agent';
+import { getOpenClawAPIService } from '../services/OpenClawAPIService';
 import { ApiEndpoints } from '../constants/ApiEndpoints';
 
-export interface AgentConfig {
-  id: string;
-  name?: string;
-  workspace?: string;
-  agentDir?: string;
-  identity?: AgentIdentity;
-  tools?: AgentTools;
+// API 响应类型
+class ApiResponse<T> {
+  data: T | null = null;
+  total: number = 0;
+  error: string = '';
 }
 
-export interface OpenClawConfig {
-  agents?: {
-    list?: AgentConfig[];
-    defaults?: {
-      model?: {
-        primary?: string;
-      };
-    };
-  };
+class AgentListResponse {
+  data: Agent[] = [];
+  total: number = 0;
+}
+
+class AgentApiData {
+  id: string = '';
+  name: string = '';
+  type: string = '';
+  status: string = '';
+  workspace: string = '';
+  isActive: boolean = false;
+  lastActivityAt: number | null = null;
+  identity: AgentIdentityData | null = null;
+}
+
+class AgentIdentityData {
+  name: string = '';
+  emoji: string = '';
+  theme: string = '';
+}
+
+class StatusApiResponse {
+  data: StatusData | null = null;
+}
+
+class StatusData {
+  agentId: string = '';
+  status: string = '';
+  timestamp: number = 0;
+}
+
+class MetricsApiResponse {
+  data: AgentMetrics | null = null;
+}
+
+class SendMessageResponse {
+  data: MessageData | null = null;
+}
+
+class MessageData {
+  messageId: string = '';
+  agentId: string = '';
+  content: string = '';
+  timestamp: number = 0;
 }
 
 export class AgentRepository {
-  private http = getHttpService();
+  private apiService = getOpenClawAPIService();
 
-  // 从 OpenClaw 配置解析 Agent 列表
+  private get http() {
+    return this.apiService.getHttpService();
+  }
+
+  // 从 Bridge Server 获取 Agent 列表
   async getAgents(): Promise<Agent[]> {
-    const agents: Agent[] = [];
-
-    // 内置的 Agent 配置（从 openclaw.json 读取）
-    const agentConfigs: AgentConfig[] = [
-      {
-        id: 'main',
-        name: 'Main Agent',
-        workspace: '/Users/beforeugone/.openclaw/workspace',
-        tools: { profile: 'full' }
-      },
-      {
-        id: 'learning-bot',
-        name: 'learning-bot',
-        workspace: '/Users/beforeugone/.openclaw/agents/学习整理bot-黎小学',
-        agentDir: '/Users/beforeugone/.openclaw/agents/learning-bot/agent',
-        identity: {
-          name: '黎小学',
-          theme: '热爱学习、知识整理、耐心细致',
-          emoji: '📚'
-        }
-      },
-      {
-        id: 'note-bot',
-        name: 'note-bot',
-        workspace: '/Users/beforeugone/.openclaw/agents/记事bot-黎小记',
-        agentDir: '/Users/beforeugone/.openclaw/agents/note-bot/agent',
-        identity: {
-          name: '黎小记',
-          theme: '记录一切、井井有条、随时提醒',
-          emoji: '📝'
-        }
-      },
-      {
-        id: 'accounting-bot',
-        name: 'accounting-bot',
-        workspace: '/Users/beforeugone/.openclaw/agents/记账bot-黎小财',
-        agentDir: '/Users/beforeugone/.openclaw/agents/accounting-bot/agent',
-        identity: {
-          name: '黎小财',
-          theme: '精打细算、理财助手、账目清晰',
-          emoji: '💰'
-        }
-      },
-      {
-        id: 'reminder-bot',
-        name: 'reminder-bot',
-        workspace: '/Users/beforeugone/.openclaw/agents/定时提醒bot-黎小令',
-        agentDir: '/Users/beforeugone/.openclaw/agents/定时提醒bot-黎小令',
-        identity: {
-          name: '黎小令',
-          theme: '准时可靠、温柔贴心、高效执行',
-          emoji: '⏰'
-        }
-      },
-      {
-        id: 'coding-bot',
-        name: 'coding-bot',
-        workspace: '/Users/beforeugone/.openclaw/agents/编程助手bot-黎小程',
-        agentDir: '/Users/beforeugone/.openclaw/agents/编程助手bot-黎小程',
-        identity: {
-          name: '黎小程',
-          theme: '专业高效、代码洁癖、热爱技术',
-          emoji: '💻'
-        }
+    try {
+      const response = await this.http.get<AgentListResponse>(ApiEndpoints.AGENTS);
+      if (response.code === 200 && response.data) {
+        return this.parseAgents(response.data.data);
       }
-    ];
-
-    for (const config of agentConfigs) {
-      const agent = this.parseAgentConfig(config);
-      // 检查 agent 是否在线
-      agent.status = await this.checkAgentStatus(agent.id);
-      agents.push(agent);
+    } catch (e) {
+      console.error('[AgentRepository] Failed to get agents from API:', e);
     }
-
-    return agents;
+    return [];
   }
 
   async getAgentById(id: string): Promise<Agent | null> {
-    const agents = await this.getAgents();
-    return agents.find(a => a.id === id) || null;
+    try {
+      const path = `${ApiEndpoints.AGENTS}/${id}`;
+      const response = await this.http.get<ApiResponse<AgentApiData>>(path);
+      if (response.code === 200 && response.data && response.data.data) {
+        return this.parseAgent(response.data.data);
+      }
+    } catch (e) {
+      console.error(`[AgentRepository] Failed to get agent ${id}:`, e);
+    }
+    return null;
   }
 
   async checkAgentStatus(agentId: string): Promise<AgentStatus> {
     try {
-      // 尝试通过 API 检查 agent 状态
       const path = `${ApiEndpoints.AGENTS}/${agentId}/status`;
-      const response = await this.http.get<{ status: string }>(path);
-      if (response.code === 200 && response.data) {
-        return this.mapStatus(response.data.status);
+      const response = await this.http.get<StatusApiResponse>(path);
+      if (response.code === 200 && response.data && response.data.data) {
+        return this.mapStatus(response.data.data.status);
       }
     } catch (e) {
-      // API 调用失败，假设 agent 处于 idle 状态
       console.warn(`[AgentRepository] Failed to check status for ${agentId}:`, e);
     }
     return AgentStatus.IDLE;
@@ -127,21 +105,24 @@ export class AgentRepository {
   async sendMessageToAgent(agentId: string, content: string): Promise<AgentMessage | null> {
     try {
       const path = ApiEndpoints.AGENT_SEND.replace('{id}', agentId);
-      const response = await this.http.post<{
-        messageId: string;
-        content: string;
-        timestamp: number;
-      }>(path, { message: content });
 
-      if (response.code === 200 && response.data) {
-        return {
-          id: response.data.messageId,
-          sessionId: '', // 需要从响应中获取
-          agentId: agentId,
-          role: 'agent',
-          content: response.data.content,
-          timestamp: response.data.timestamp
-        };
+      class SendBody {
+        message: string = '';
+      }
+      const body = new SendBody();
+      body.message = content;
+
+      const response = await this.http.post<SendMessageResponse>(path, body);
+
+      if (response.code === 200 && response.data && response.data.data) {
+        const msg = new AgentMessage();
+        msg.id = response.data.data.messageId;
+        msg.sessionId = '';
+        msg.agentId = agentId;
+        msg.role = 'agent';
+        msg.content = response.data.data.content;
+        msg.timestamp = response.data.data.timestamp;
+        return msg;
       }
     } catch (e) {
       console.error(`[AgentRepository] Failed to send message to ${agentId}:`, e);
@@ -150,70 +131,69 @@ export class AgentRepository {
   }
 
   async getAgentSessions(agentId: string): Promise<AgentSession[]> {
-    try {
-      const path = `${ApiEndpoints.AGENTS}/${agentId}/sessions`;
-      const response = await this.http.get<AgentSession[]>(path);
-      if (response.code === 200 && response.data) {
-        return response.data;
-      }
-    } catch (e) {
-      console.warn(`[AgentRepository] Failed to get sessions for ${agentId}:`, e);
-    }
+    // TODO: 从 Bridge Server 获取会话列表
     return [];
   }
 
   async getAgentMetrics(agentId: string): Promise<AgentMetrics | undefined> {
     try {
       const path = `${ApiEndpoints.AGENTS}/${agentId}/metrics`;
-      const response = await this.http.get<AgentMetrics>(path);
-      if (response.code === 200 && response.data) {
-        return response.data;
+      const response = await this.http.get<MetricsApiResponse>(path);
+      if (response.code === 200 && response.data && response.data.data) {
+        return response.data.data;
       }
     } catch (e) {
-      // 返回模拟数据
-      return this.getMockMetrics(agentId);
+      console.warn(`[AgentRepository] Failed to get metrics for ${agentId}:`, e);
     }
-    return undefined;
+    return this.getMockMetrics(agentId);
   }
 
-  private parseAgentConfig(config: AgentConfig): Agent {
+  private parseAgents(data: AgentApiData[]): Agent[] {
+    const agents: Agent[] = [];
+    for (const item of data) {
+      const agent = this.parseAgent(item);
+      agents.push(agent);
+    }
+    return agents;
+  }
+
+  private parseAgent(data: AgentApiData): Agent {
     const agent = new Agent();
-    agent.id = config.id;
-    agent.name = config.name || config.id;
-    agent.workspace = config.workspace || '';
-    agent.agentDir = config.agentDir || '';
-    agent.identity = config.identity;
-    agent.tools = config.tools;
-    agent.type = this.mapAgentType(config.id);
-    agent.isActive = config.id === 'main'; // main agent 默认激活
+    agent.id = data.id;
+    agent.name = data.name;
+    agent.workspace = data.workspace;
+    agent.status = this.mapStatus(data.status);
+    agent.type = this.mapAgentType(data.type);
+    agent.isActive = data.isActive;
+
+    if (data.identity) {
+      agent.identity = {
+        name: data.identity.name,
+        emoji: data.identity.emoji,
+        theme: data.identity.theme
+      };
+    }
 
     return agent;
   }
 
-  private mapAgentType(id: string): AgentType {
-    if (id === 'main') return AgentType.MAIN;
-    if (id.includes('learning')) return AgentType.LEARNING;
-    if (id.includes('note')) return AgentType.NOTE;
-    if (id.includes('accounting')) return AgentType.ACCOUNTING;
-    if (id.includes('reminder')) return AgentType.REMINDER;
-    if (id.includes('coding')) return AgentType.CODING;
+  private mapAgentType(type: string): AgentType {
+    if (type === 'main') return AgentType.MAIN;
+    if (type === 'learning') return AgentType.LEARNING;
+    if (type === 'note') return AgentType.NOTE;
+    if (type === 'accounting') return AgentType.ACCOUNTING;
+    if (type === 'reminder') return AgentType.REMINDER;
+    if (type === 'coding') return AgentType.CODING;
     return AgentType.CUSTOM;
   }
 
   private mapStatus(status: string): AgentStatus {
-    switch (status.toLowerCase()) {
-      case 'active':
-      case 'online':
-        return AgentStatus.ACTIVE;
-      case 'busy':
-        return AgentStatus.BUSY;
-      case 'error':
-        return AgentStatus.ERROR;
-      case 'offline':
-        return AgentStatus.OFFLINE;
-      default:
-        return AgentStatus.IDLE;
-    }
+    const s = status.toLowerCase();
+    if (s === 'active' || s === 'online') return AgentStatus.ACTIVE;
+    if (s === 'busy') return AgentStatus.BUSY;
+    if (s === 'error') return AgentStatus.ERROR;
+    if (s === 'offline') return AgentStatus.OFFLINE;
+    return AgentStatus.IDLE;
   }
 
   private getMockMetrics(agentId: string): AgentMetrics {

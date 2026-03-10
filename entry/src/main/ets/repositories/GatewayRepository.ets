@@ -89,20 +89,28 @@ export class GatewayRepository {
   async connect(gateway: Gateway): Promise<boolean> {
     const isValid = await this.validateConnection(gateway);
     if (isValid) {
-      // Set base URL for all subsequent API calls
-      const http = this.api['http']; // Access private http service
-      if (http) {
-        http.setBaseUrl(`http://${gateway.host}:${gateway.port}`);
-      }
+      // Set gateway for all subsequent API calls
+      this.api.setGateway(gateway);
       await this.setCurrent(gateway.id);
+      console.log(`[GatewayRepository] Connected to gateway ${gateway.name} at ${gateway.host}:${gateway.port}`);
     }
     return isValid;
   }
 
   setBaseUrl(url: string): void {
-    const http = this.api['http'];
-    if (http) {
-      http.setBaseUrl(url);
+    // Parse URL to extract host and port
+    try {
+      const match = url.match(/http:\/\/([^:]+):(\d+)/);
+      if (match) {
+        const host = match[1];
+        const port = parseInt(match[2]);
+        const gateway = new Gateway();
+        gateway.host = host;
+        gateway.port = port;
+        this.api.setGateway(gateway);
+      }
+    } catch (e) {
+      console.error('[GatewayRepository] Failed to parse URL:', e);
     }
   }
 }

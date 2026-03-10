@@ -12,10 +12,13 @@
  * - 模式: local
  */
 export class ApiEndpoints {
-  // OpenClaw 默认配置
+  // OpenClaw Bridge 配置 (Harmony-Claw Bridge Server)
   static readonly DEFAULT_HOST = 'localhost';
-  static readonly DEFAULT_PORT = 18789;
+  static readonly DEFAULT_PORT = 8333;
   static readonly AUTH_TOKEN = 'ollama';
+
+  // OpenClaw Control UI 端口
+  static readonly CONTROL_UI_PORT = 18789;
 
   // Base paths
   static readonly BASE_API = '/api/v1';

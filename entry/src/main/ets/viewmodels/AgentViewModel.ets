@@ -1,8 +1,11 @@
 import { Agent, AgentStatus, AgentType, AgentSession, AgentMessage, AgentMetrics } from '../models/Agent';
 import { getAgentRepository } from '../repositories/AgentRepository';
+import { getOpenClawAPIService } from '../services/OpenClawAPIService';
+import { Gateway } from '../models/Gateway';
 
 export class AgentViewModel {
   private repository = getAgentRepository();
+  private apiService = getOpenClawAPIService();
 
   agents: Agent[] = [];
   currentAgent: Agent | null = null;
@@ -11,35 +14,71 @@ export class AgentViewModel {
   isLoading: boolean = false;
   isSending: boolean = false;
   errorMessage: string = '';
+  currentGateway: Gateway | null = null;
 
   async initialize(): Promise<void> {
-    try {
-      await this.loadAgents();
-    } catch (e) {
-      console.error(`[AgentViewModel] Initialize failed: ${JSON.stringify(e)}`);
+    // Check if there's already a connected gateway
+    const currentGateway = this.apiService.getCurrentGateway();
+    if (currentGateway) {
+      this.currentGateway = currentGateway;
+      try {
+        await this.loadAgents();
+      } catch (e) {
+        console.error(`[AgentViewModel] Initialize failed: ${JSON.stringify(e)}`);
+        this.agents = [];
+      }
+    } else {
+      console.log('[AgentViewModel] No gateway connected, skipping agent load');
       this.agents = [];
     }
   }
 
+  /**
+   * Refresh agent list from current gateway
+   */
+  async refresh(): Promise<void> {
+    // Re-check gateway connection
+    const currentGateway = this.apiService.getCurrentGateway();
+    if (currentGateway) {
+      this.currentGateway = currentGateway;
+    }
+    await this.loadAgents();
+  }
+
+  /**
+   * Set the current gateway and load agents from it
+   */
+  async setGateway(gateway: Gateway): Promise<void> {
+    this.currentGateway = gateway;
+    this.apiService.setGateway(gateway);
+    console.log(`[AgentViewModel] Gateway set to ${gateway.host}:${gateway.port}`);
+    await this.loadAgents();
+  }
+
   async loadAgents(): Promise<void> {
+    // Check if we have a connected gateway
+    if (!this.currentGateway && !this.apiService.isConnected()) {
+      console.log('[AgentViewModel] No gateway connected, cannot load agents');
+      this.agents = [];
+      return;
+    }
+
     this.isLoading = true;
     this.errorMessage = '';
     try {
       this.agents = await this.repository.getAgents();
-      // 加载每个 agent 的指标
+      // Load metrics for each agent
       for (const agent of this.agents) {
         agent.metrics = await this.repository.getAgentMetrics(agent.id);
       }
+      console.log(`[AgentViewModel] Loaded ${this.agents.length} agents`);
     } catch (e) {
       console.error(`[AgentViewModel] Failed to load agents: ${JSON.stringify(e)}`);
       this.errorMessage = '加载 Agent 失败';
+      this.agents = [];
     } finally {
       this.isLoading = false;
     }
-  }
-
-  async refresh(): Promise<void> {
-    await this.loadAgents();
   }
 
   async selectAgent(agent: Agent): Promise<void> {
@@ -112,7 +151,7 @@ export class AgentViewModel {
   }
 
   getOnlineCount(): number {
-    return this.agents.filter(a =
+    return this.agents.filter((a: Agent) =>
       a.status === AgentStatus.ACTIVE ||
       a.status === AgentStatus.IDLE ||
       a.status === AgentStatus.BUSY
