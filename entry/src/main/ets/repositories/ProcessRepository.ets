@@ -33,7 +33,11 @@ export class ProcessRepository {
   async restartProcess(id: string): Promise<boolean> {
     try {
       const path = `${ApiEndpoints.PROCESSES}/${id}/restart`;
-      const response = await this.http.post<Process>(path, {});
+      class RestartBody {
+        force: boolean = false;
+      }
+      const body = new RestartBody();
+      const response = await this.http.post<Process>(path, body);
       return response.code === 200;
     } catch (e) {
       console.error(`[ProcessRepository] Failed to restart process ${id}:`, e);

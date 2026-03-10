@@ -131,7 +131,8 @@ export class ChatRepository {
   }
 
   async getAllMessages(): Promise<Message[]> {
-    return await this.storage.getObject<Message[]>('messages', []);
+    const result = await this.storage.getObject<Message[]>('messages', []);
+    return result ?? [];
   }
 
   async clearSessionMessages(sessionId: string): Promise<void> {

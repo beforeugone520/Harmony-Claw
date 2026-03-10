@@ -10,7 +10,7 @@ class ApiResponse<T> {
 }
 
 class AgentListResponse {
-  data: Agent[] = [];
+  data: AgentApiData[] = [];
   total: number = 0;
 }
 
@@ -54,6 +54,17 @@ class MessageData {
   agentId: string = '';
   content: string = '';
   timestamp: number = 0;
+}
+
+// Concrete class for AgentMessage
+class AgentMessageImpl implements AgentMessage {
+  id: string = '';
+  sessionId: string = '';
+  agentId: string = '';
+  role: 'user' | 'agent' | 'system' = 'agent';
+  content: string = '';
+  timestamp: number = 0;
+  metadata?: Record<string, string | number | boolean> = undefined;
 }
 
 export class AgentRepository {
@@ -115,7 +126,7 @@ export class AgentRepository {
       const response = await this.http.post<SendMessageResponse>(path, body);
 
       if (response.code === 200 && response.data && response.data.data) {
-        const msg = new AgentMessage();
+        const msg = new AgentMessageImpl();
         msg.id = response.data.data.messageId;
         msg.sessionId = '';
         msg.agentId = agentId;

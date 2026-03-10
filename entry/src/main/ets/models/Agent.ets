@@ -27,11 +27,13 @@ export interface AgentIdentity {
   emoji: string;
 }
 
+export interface AgentWebTools {
+  search: boolean;
+}
+
 export interface AgentTools {
   profile: string;
-  web?: {
-    search: boolean;
-  };
+  web?: AgentWebTools;
 }
 
 export interface AgentMetrics {
@@ -109,5 +111,5 @@ export interface AgentMessage {
   role: 'user' | 'agent' | 'system';
   content: string;
   timestamp: number;
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, string | number | boolean>;
 }

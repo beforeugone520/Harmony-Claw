@@ -104,14 +104,21 @@ export class AgentViewModel {
     this.isSending = true;
     try {
       // 添加用户消息
-      const userMessage: AgentMessage = {
-        id: Date.now().toString(),
-        sessionId: '',
-        agentId: this.currentAgent.id,
-        role: 'user',
-        content: content,
-        timestamp: Date.now()
-      };
+      class UserMessage implements AgentMessage {
+        id: string = '';
+        sessionId: string = '';
+        agentId: string = '';
+        role: 'user' | 'agent' | 'system' = 'user';
+        content: string = '';
+        timestamp: number = 0;
+      }
+      const userMessage = new UserMessage();
+      userMessage.id = Date.now().toString();
+      userMessage.sessionId = '';
+      userMessage.agentId = this.currentAgent.id;
+      userMessage.role = 'user';
+      userMessage.content = content;
+      userMessage.timestamp = Date.now();
       this.messages.push(userMessage);
 
       // 发送给 agent
@@ -124,14 +131,22 @@ export class AgentViewModel {
         this.messages.push(response);
       } else {
         // 模拟回复
-        this.messages.push({
-          id: `${Date.now()}_reply`,
-          sessionId: '',
-          agentId: this.currentAgent.id,
-          role: 'agent',
-          content: `[${this.currentAgent.displayName}] 收到您的消息: ${content}`,
-          timestamp: Date.now()
-        });
+        class ReplyMessage implements AgentMessage {
+          id: string = '';
+          sessionId: string = '';
+          agentId: string = '';
+          role: 'user' | 'agent' | 'system' = 'agent';
+          content: string = '';
+          timestamp: number = 0;
+        }
+        const reply = new ReplyMessage();
+        reply.id = `${Date.now()}_reply`;
+        reply.sessionId = '';
+        reply.agentId = this.currentAgent.id;
+        reply.role = 'agent';
+        reply.content = `[${this.currentAgent.displayName}] 收到您的消息: ${content}`;
+        reply.timestamp = Date.now();
+        this.messages.push(reply);
       }
     } finally {
       this.isSending = false;
