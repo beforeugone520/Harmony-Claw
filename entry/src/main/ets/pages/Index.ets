@@ -5,12 +5,15 @@ import { DesignTokens as DT, Spacing as SP } from '../constants';
 import { GatewayViewModel } from '../viewmodels/GatewayViewModel';
 import { ChatViewModel } from '../viewmodels/ChatViewModel';
 import { ProcessViewModel } from '../viewmodels/ProcessViewModel';
+import { AgentViewModel } from '../viewmodels/AgentViewModel';
 import { GatewayCard } from '../components/gateway/GatewayCard';
 import { SessionItem } from '../components/chat/SessionItem';
 import { ProcessCard } from '../components/process/ProcessCard';
+import { AgentCard } from '../components/agent/AgentCard';
 import { Gateway } from '../models/Gateway';
 import { Session } from '../models/Session';
 import { Process } from '../models/Process';
+import { Agent } from '../models/Agent';
 
 @Entry
 @Component
@@ -19,6 +22,7 @@ struct Index {
   @State gatewayViewModel: GatewayViewModel = new GatewayViewModel();
   @State chatViewModel: ChatViewModel = new ChatViewModel();
   @State processViewModel: ProcessViewModel = new ProcessViewModel();
+  @State agentViewModel: AgentViewModel = new AgentViewModel();
 
   // 动态模糊状态
   @State headerOpacity: number = 0
@@ -30,6 +34,9 @@ struct Index {
     });
     this.processViewModel.initialize().catch((e: Error) => {
       console.error(`[Index] Failed to initialize processViewModel: ${JSON.stringify(e)}`);
+    });
+    this.agentViewModel.initialize().catch((e: Error) => {
+      console.error(`[Index] Failed to initialize agentViewModel: ${JSON.stringify(e)}`);
     });
   }
 
@@ -78,6 +85,21 @@ struct Index {
               .fontWeight(FontWeight.Bold)
               .fontColor(DT.WARNING)
             Text('运行进程')
+              .fontSize(12)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
+          }
+          .layoutWeight(1)
+          .padding(SP.L)
+          .backgroundColor(DT.LIGHT_BG_PRIMARY)
+          .borderRadius(SP.RADIUS_L)
+          .shadow({ radius: 8, color: DT.SHADOW_LIGHT, offsetX: 0, offsetY: 2 })
+
+          Column({ space: SP.XS }) {
+            Text(String(this.agentViewModel.getOnlineCount()))
+              .fontSize(28)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(DT.INFO)
+            Text('在线Agent')
               .fontSize(12)
               .fontColor(DT.LIGHT_TEXT_SECONDARY)
           }
@@ -225,6 +247,111 @@ struct Index {
     .onClick(() => {
       router.pushUrl({ url: 'pages/ProcessListPage' });
     })
+  }
+
+  @Builder
+  AgentsContent() {
+    Scroll() {
+      Column({ space: SP.L }) {
+        // Agent 统计
+        Row({ space: SP.M }) {
+          Column({ space: SP.XS }) {
+            Text(String(this.agentViewModel.agents.length))
+              .fontSize(28)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(DT.BRAND_PRIMARY)
+            Text('总Agent数')
+              .fontSize(12)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
+          }
+          .layoutWeight(1)
+          .padding(SP.L)
+          .backgroundColor(DT.LIGHT_BG_PRIMARY)
+          .borderRadius(SP.RADIUS_L)
+
+          Column({ space: SP.XS }) {
+            Text(String(this.agentViewModel.getOnlineCount()))
+              .fontSize(28)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(DT.SUCCESS)
+            Text('在线Agent')
+              .fontSize(12)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
+          }
+          .layoutWeight(1)
+          .padding(SP.L)
+          .backgroundColor(DT.LIGHT_BG_PRIMARY)
+          .borderRadius(SP.RADIUS_L)
+
+          Column({ space: SP.XS }) {
+            Text(String(this.agentViewModel.getBusyCount()))
+              .fontSize(28)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(DT.WARNING)
+            Text('忙碌Agent')
+              .fontSize(12)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
+          }
+          .layoutWeight(1)
+          .padding(SP.L)
+          .backgroundColor(DT.LIGHT_BG_PRIMARY)
+          .borderRadius(SP.RADIUS_L)
+        }
+        .width('100%')
+        .padding(SP.L)
+
+        // Agent 列表标题
+        Row() {
+          Text('OpenClaw Agents')
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(DT.LIGHT_TEXT_PRIMARY)
+          Blank()
+          Button('刷新')
+            .fontSize(12)
+            .fontColor(DT.BRAND_PRIMARY)
+            .backgroundColor('transparent')
+            .onClick(() => {
+              this.agentViewModel.refresh()
+            })
+        }
+        .width('100%')
+        .padding({ left: SP.L, right: SP.L })
+
+        // Agent 列表
+        if (this.agentViewModel.isLoading) {
+          Text('加载中...')
+            .fontSize(14)
+            .fontColor(DT.LIGHT_TEXT_SECONDARY)
+            .margin({ top: 50 })
+        } else if (this.agentViewModel.agents.length === 0) {
+          Text('暂无 Agent')
+            .fontSize(14)
+            .fontColor(DT.LIGHT_TEXT_SECONDARY)
+            .margin({ top: 50 })
+        } else {
+          ForEach(this.agentViewModel.agents, (agent: Agent) => {
+            AgentCard({
+              agent: agent,
+              isSelected: this.agentViewModel.currentAgent?.id === agent.id,
+              onItemClick: () => {
+                this.agentViewModel.selectAgent(agent)
+              },
+              onSendMessage: () => {
+                // TODO: 跳转到 Agent 对话页面
+              }
+            })
+          }, (agent: Agent) => agent.id)
+        }
+
+        // 底部安全间距
+        Column().height(20)
+      }
+      .width('100%')
+      .padding({ bottom: SP.L })
+    }
+    .width('100%')
+    .layoutWeight(1)
   }
 
   @Builder
@@ -411,9 +538,14 @@ struct Index {
         .tabBar(this.TabBarBuilder('⚙️', '进程', 2))
 
         TabContent() {
+          this.AgentsContent()
+        }
+        .tabBar(this.TabBarBuilder('🤖', 'Agent', 3))
+
+        TabContent() {
           this.SettingsContent()
         }
-        .tabBar(this.TabBarBuilder('⚙️', '设置', 3))
+        .tabBar(this.TabBarBuilder('⚙️', '设置', 4))
       }
       .width('100%')
       .height('100%')
@@ -440,7 +572,7 @@ struct Index {
 
         Blank()
 
-        if (this.selectedTabIndex === 0) {
+        if (this.selectedTabIndex === 0 || this.selectedTabIndex === 3) {
           Button() {
             SymbolGlyph($r('sys.symbol.plus'))
               .fontSize(22)
