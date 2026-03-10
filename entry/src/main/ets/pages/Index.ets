@@ -1,4 +1,4 @@
-import { router } from '@kit.ArkUI';
+import { router, Curves } from '@kit.ArkUI';
 import { Colors, Typography } from '../styles/DesignTokens';
 import { Spacing, Layout } from '../styles/Spacing';
 import { DesignTokens as DT, Spacing as SP } from '../constants';
@@ -316,9 +316,9 @@ struct Index {
     return `rgba(255,255,255,${alpha / 255})`
   }
 
-  // Tab 切换动画配置 - 使用 EaseOut 实现平滑动画
-  private tabAnimationDuration: number = 300
-  private tabAnimationCurve: Curve = Curve.EaseOut
+  // Tab 切换动画配置 - 使用 SpringMotion 实现弹簧效果
+  private tabAnimationDuration: number = 400
+  private tabAnimationCurve: Curve = Curves.springCurve(100, 1, 180, 16)
 
   // Tab Bar 样式
   @Builder
