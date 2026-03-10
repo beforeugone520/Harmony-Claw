@@ -1,6 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { Colors, Typography } from '../styles/DesignTokens';
 import { Spacing, Layout } from '../styles/Spacing';
+import { DesignTokens as DT, Spacing as SP } from '../constants';
 import { GatewayViewModel } from '../viewmodels/GatewayViewModel';
 import { ChatViewModel } from '../viewmodels/ChatViewModel';
 import { ProcessViewModel } from '../viewmodels/ProcessViewModel';
@@ -29,28 +30,24 @@ struct Index {
   }
 
   @Builder
-  TabItemBuilder(title: string, index: number) {
+  TabItemBuilder(icon: string, title: string, index: number) {
     Column({ space: 4 }) {
+      Text(icon)
+        .fontSize(22)
+        .fontColor(this.selectedTabIndex === index ? DT.BRAND_PRIMARY : DT.LIGHT_TEXT_TERTIARY)
+        .scale({ x: this.selectedTabIndex === index ? 1.1 : 1, y: this.selectedTabIndex === index ? 1.1 : 1 })
+        .animation({ duration: 200, curve: Curve.EaseOut })
+
       Text(title)
-        .fontSize(12)
-        .fontColor(this.selectedTabIndex === index ? Colors.brandPrimary : Colors.textTertiary)
+        .fontSize(11)
+        .fontColor(this.selectedTabIndex === index ? DT.BRAND_PRIMARY : DT.LIGHT_TEXT_TERTIARY)
         .fontWeight(this.selectedTabIndex === index ? FontWeight.Medium : FontWeight.Regular)
-        // 选中状态缩放动画
         .scale({ x: this.selectedTabIndex === index ? 1.05 : 1, y: this.selectedTabIndex === index ? 1.05 : 1 })
-        .animation({
-          duration: 200,
-          curve: Curve.EaseOut
-        })
+        .animation({ duration: 200, curve: Curve.EaseOut })
     }
     .layoutWeight(1)
     .height('100%')
     .justifyContent(FlexAlign.Center)
-    // 点击反馈动画
-    .stateStyles({
-      pressed: {
-        .backgroundColor('rgba(0,0,0,0.05)')
-      }
-    })
     .onClick(() => {
       this.selectedTabIndex = index;
     })
@@ -59,116 +56,92 @@ struct Index {
   @Builder
   DashboardContent() {
     Scroll() {
-      Column({ space: Spacing.lg }) {
+      Column({ space: SP.L }) {
         // Stats Cards
-        Row({ space: Spacing.md }) {
-          Column({ space: Spacing.xs }) {
+        Row({ space: SP.M }) {
+          Column({ space: SP.XS }) {
             Text(String(this.gatewayViewModel.getOnlineCount()))
-              .fontSize(32)
+              .fontSize(28)
               .fontWeight(FontWeight.Bold)
-              .fontColor(Colors.brandPrimary)
+              .fontColor(DT.BRAND_PRIMARY)
             Text('在线网关')
-              .fontSize(Typography.sizeSmall)
-              .fontColor(Colors.textSecondary)
+              .fontSize(12)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
           }
           .layoutWeight(1)
-          .padding(Spacing.lg)
-          .backgroundColor(Colors.surfaceCard)
-          .borderRadius(12)
-          // 点击动画
-          .stateStyles({
-            pressed: {
-              .scale({ x: 0.95, y: 0.95 })
-            }
-          })
-          .animation({
-            duration: 100,
-            curve: Curve.EaseOut
-          })
+          .padding(SP.L)
+          .backgroundColor(DT.LIGHT_BG_PRIMARY)
+          .borderRadius(SP.RADIUS_L)
+          .shadow({ radius: 8, color: DT.SHADOW_LIGHT, offsetX: 0, offsetY: 2 })
 
-          Column({ space: Spacing.xs }) {
+          Column({ space: SP.XS }) {
             Text(String(this.chatViewModel.sessions.length))
-              .fontSize(32)
+              .fontSize(28)
               .fontWeight(FontWeight.Bold)
-              .fontColor(Colors.success)
+              .fontColor(DT.SUCCESS)
             Text('活跃会话')
-              .fontSize(Typography.sizeSmall)
-              .fontColor(Colors.textSecondary)
+              .fontSize(12)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
           }
           .layoutWeight(1)
-          .padding(Spacing.lg)
-          .backgroundColor(Colors.surfaceCard)
-          .borderRadius(12)
-          // 点击动画
-          .stateStyles({
-            pressed: {
-              .scale({ x: 0.95, y: 0.95 })
-            }
-          })
-          .animation({
-            duration: 100,
-            curve: Curve.EaseOut
-          })
+          .padding(SP.L)
+          .backgroundColor(DT.LIGHT_BG_PRIMARY)
+          .borderRadius(SP.RADIUS_L)
+          .shadow({ radius: 8, color: DT.SHADOW_LIGHT, offsetX: 0, offsetY: 2 })
 
-          Column({ space: Spacing.xs }) {
+          Column({ space: SP.XS }) {
             Text(String(this.processViewModel.getRunningCount()))
-              .fontSize(32)
+              .fontSize(28)
               .fontWeight(FontWeight.Bold)
-              .fontColor(Colors.warning)
+              .fontColor(DT.WARNING)
             Text('运行进程')
-              .fontSize(Typography.sizeSmall)
-              .fontColor(Colors.textSecondary)
+              .fontSize(12)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
           }
           .layoutWeight(1)
-          .padding(Spacing.lg)
-          .backgroundColor(Colors.surfaceCard)
-          .borderRadius(12)
-          // 点击动画
-          .stateStyles({
-            pressed: {
-              .scale({ x: 0.95, y: 0.95 })
-            }
-          })
-          .animation({
-            duration: 100,
-            curve: Curve.EaseOut
-          })
+          .padding(SP.L)
+          .backgroundColor(DT.LIGHT_BG_PRIMARY)
+          .borderRadius(SP.RADIUS_L)
+          .shadow({ radius: 8, color: DT.SHADOW_LIGHT, offsetX: 0, offsetY: 2 })
         }
         .width('100%')
 
         // Quick Actions
-        Column({ space: Spacing.md }) {
+        Column({ space: SP.M }) {
           Text('快捷操作')
-            .fontSize(Typography.sizeH4)
-            .fontWeight(Typography.weightMedium)
-            .fontColor(Colors.textPrimary)
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(DT.LIGHT_TEXT_PRIMARY)
             .width('100%')
 
-          Row({ space: Spacing.md }) {
+          Row({ space: SP.M }) {
             Button('网关管理')
               .width('100%')
-              .height(48)
-              .backgroundColor(Colors.brandPrimary)
+              .height(44)
+              .backgroundColor(DT.BRAND_PRIMARY)
+              .borderRadius(SP.RADIUS_S)
               .onClick(() => {
                 router.pushUrl({ url: 'pages/GatewayListPage' });
               })
           }
           .width('100%')
 
-          Row({ space: Spacing.md }) {
+          Row({ space: SP.M }) {
             Button('进程监控')
               .layoutWeight(1)
-              .height(48)
-              .backgroundColor(Colors.info)
+              .height(44)
+              .backgroundColor(DT.INFO)
+              .borderRadius(SP.RADIUS_S)
               .onClick(() => {
                 router.pushUrl({ url: 'pages/ProcessListPage' });
               })
 
             Button('刷新数据')
               .layoutWeight(1)
-              .height(48)
-              .backgroundColor(Colors.backgroundTertiary)
-              .fontColor(Colors.textPrimary)
+              .height(44)
+              .backgroundColor(DT.LIGHT_BG_SECONDARY)
+              .fontColor(DT.LIGHT_TEXT_PRIMARY)
+              .borderRadius(SP.RADIUS_S)
               .onClick(() => {
                 this.gatewayViewModel.refresh();
                 this.processViewModel.refresh();
@@ -177,17 +150,18 @@ struct Index {
           .width('100%')
         }
         .width('100%')
-        .padding(Spacing.lg)
-        .backgroundColor(Colors.surfaceCard)
-        .borderRadius(12)
+        .padding(SP.L)
+        .backgroundColor(DT.LIGHT_BG_PRIMARY)
+        .borderRadius(SP.RADIUS_L)
+        .shadow({ radius: 8, color: DT.SHADOW_LIGHT, offsetX: 0, offsetY: 2 })
 
         // Recent Gateways
         if (this.gatewayViewModel.gateways && this.gatewayViewModel.gateways.length > 0) {
-          Column({ space: Spacing.md }) {
+          Column({ space: SP.M }) {
             Text('最近网关')
-              .fontSize(Typography.sizeH4)
-              .fontWeight(Typography.weightMedium)
-              .fontColor(Colors.textPrimary)
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(DT.LIGHT_TEXT_PRIMARY)
               .width('100%')
 
             ForEach(this.gatewayViewModel.gateways.filter(g => g != null).slice(0, 3), (gateway: Gateway) => {
@@ -198,6 +172,10 @@ struct Index {
             }, (gateway: Gateway) => gateway.id)
           }
           .width('100%')
+          .padding(SP.L)
+          .backgroundColor(DT.LIGHT_BG_PRIMARY)
+          .borderRadius(SP.RADIUS_L)
+          .shadow({ radius: 8, color: DT.SHADOW_LIGHT, offsetX: 0, offsetY: 2 })
         }
 
         // Recent Sessions (disabled for stability)
@@ -207,7 +185,7 @@ struct Index {
         // ForEach removed due to ArkTS 6.x compatibility issues
       }
       .width('100%')
-      .padding(Spacing.lg)
+      .padding(SP.L)
     }
     .layoutWeight(1)
   }
@@ -246,77 +224,82 @@ struct Index {
 
   @Builder
   SettingsContent() {
-    Column({ space: Spacing.lg }) {
+    Column({ space: SP.L }) {
       Text('设置')
-        .fontSize(Typography.sizeH3)
-        .fontWeight(Typography.weightBold)
-        .fontColor(Colors.textPrimary)
+        .fontSize(20)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(DT.LIGHT_TEXT_PRIMARY)
         .width('100%')
-        .margin({ top: Spacing.lg, bottom: Spacing.lg })
+        .margin({ top: SP.L, bottom: SP.L })
 
-      Column({ space: Spacing.md }) {
+      Column({ space: SP.M }) {
         Row() {
           Text('深色模式')
-            .fontSize(Typography.sizeBody)
-            .fontColor(Colors.textPrimary)
+            .fontSize(14)
+            .fontColor(DT.LIGHT_TEXT_PRIMARY)
           Blank()
           Toggle({ type: ToggleType.Switch, isOn: false })
-            .selectedColor(Colors.brandPrimary)
+            .selectedColor(DT.BRAND_PRIMARY)
         }
         .width('100%')
-        .height(56)
-        .padding(Spacing.md)
-        .backgroundColor(Colors.surfaceCard)
-        .borderRadius(12)
+        .height(52)
+        .padding(SP.M)
+        .backgroundColor(DT.LIGHT_BG_PRIMARY)
+        .borderRadius(SP.RADIUS_M)
+        .shadow({ radius: 4, color: DT.SHADOW_LIGHT, offsetX: 0, offsetY: 1 })
 
         Row() {
           Text('消息通知')
-            .fontSize(Typography.sizeBody)
-            .fontColor(Colors.textPrimary)
+            .fontSize(14)
+            .fontColor(DT.LIGHT_TEXT_PRIMARY)
           Blank()
           Toggle({ type: ToggleType.Switch, isOn: true })
-            .selectedColor(Colors.brandPrimary)
+            .selectedColor(DT.BRAND_PRIMARY)
         }
         .width('100%')
-        .height(56)
-        .padding(Spacing.md)
-        .backgroundColor(Colors.surfaceCard)
-        .borderRadius(12)
+        .height(52)
+        .padding(SP.M)
+        .backgroundColor(DT.LIGHT_BG_PRIMARY)
+        .borderRadius(SP.RADIUS_M)
+        .shadow({ radius: 4, color: DT.SHADOW_LIGHT, offsetX: 0, offsetY: 1 })
 
         Row() {
           Text('自动刷新')
-            .fontSize(Typography.sizeBody)
-            .fontColor(Colors.textPrimary)
+            .fontSize(14)
+            .fontColor(DT.LIGHT_TEXT_PRIMARY)
           Blank()
           Toggle({ type: ToggleType.Switch, isOn: true })
-            .selectedColor(Colors.brandPrimary)
+            .selectedColor(DT.BRAND_PRIMARY)
         }
         .width('100%')
-        .height(56)
-        .padding(Spacing.md)
-        .backgroundColor(Colors.surfaceCard)
-        .borderRadius(12)
+        .height(52)
+        .padding(SP.M)
+        .backgroundColor(DT.LIGHT_BG_PRIMARY)
+        .borderRadius(SP.RADIUS_M)
+        .shadow({ radius: 4, color: DT.SHADOW_LIGHT, offsetX: 0, offsetY: 1 })
 
         Button('清除缓存')
           .width('100%')
-          .height(48)
-          .backgroundColor(Colors.warning)
-          .fontColor(Colors.textInverse)
-          .margin({ top: Spacing.lg })
+          .height(44)
+          .backgroundColor(DT.WARNING)
+          .fontColor('#FFFFFF')
+          .borderRadius(SP.RADIUS_S)
+          .margin({ top: SP.L })
 
         Button('关于应用')
           .width('100%')
-          .height(48)
-          .backgroundColor(Colors.backgroundTertiary)
-          .fontColor(Colors.textPrimary)
+          .height(44)
+          .backgroundColor(DT.LIGHT_BG_SECONDARY)
+          .fontColor(DT.LIGHT_TEXT_PRIMARY)
+          .borderRadius(SP.RADIUS_S)
 
         Text('Harmony Claw v1.0.0')
-          .fontSize(Typography.sizeCaption)
-          .fontColor(Colors.textTertiary)
-          .margin({ top: Spacing.xl })
+          .fontSize(12)
+          .fontColor(DT.LIGHT_TEXT_TERTIARY)
+          .margin({ top: SP.XL })
       }
       .width('100%')
-      .padding(Spacing.lg)
+      .padding(SP.L)
     }
     .width('100%')
     .layoutWeight(1)
@@ -324,21 +307,20 @@ struct Index {
 
   build() {
     Column() {
-      // Header
+      // Header with blur effect
       Row() {
         Text('Harmony Claw')
-          .fontSize(18)
+          .fontSize(20)
           .fontWeight(FontWeight.Bold)
-          .fontColor(Colors.textPrimary)
+          .fontColor(DT.LIGHT_TEXT_PRIMARY)
 
         Blank()
 
-        Button('+')
+        Button('➕')
           .width(40)
           .height(40)
           .backgroundColor('transparent')
-          .fontColor(Colors.brandPrimary)
-          .fontSize(24)
+          .fontSize(20)
           .onClick(() => {
             if (this.selectedTabIndex === 0) {
               router.pushUrl({ url: 'pages/GatewayListPage' });
@@ -349,8 +331,9 @@ struct Index {
       }
       .width('100%')
       .height(Layout.headerHeight)
-      .padding({ left: Spacing.lg, right: Spacing.lg })
-      .backgroundColor(Colors.backgroundSecondary)
+      .padding({ left: SP.L, right: SP.L })
+      .backgroundColor('rgba(255,255,255,0.85)')
+      .backgroundBlurStyle(BlurStyle.Thin)
 
       // Content
       Stack({ alignContent: Alignment.TopStart }) {
@@ -367,21 +350,28 @@ struct Index {
       .layoutWeight(1)
       .width('100%')
 
-      // Bottom Tab Bar
+      // Bottom Tab Bar with blur effect
       Row() {
-        this.TabItemBuilder('首页', 0)
-        this.TabItemBuilder('网关', 1)
-        this.TabItemBuilder('进程', 2)
-        this.TabItemBuilder('设置', 3)
+        this.TabItemBuilder('🏠', '首页', 0)
+        this.TabItemBuilder('🌐', '网关', 1)
+        this.TabItemBuilder('⚙️', '进程', 2)
+        this.TabItemBuilder('⚙️', '设置', 3)
       }
       .width('100%')
       .height(Layout.tabBarHeight)
-      .backgroundColor(Colors.backgroundSecondary)
-      .border({ width: { top: 1 }, color: Colors.borderLight })
+      .backgroundColor('rgba(255,255,255,0.85)')
+      .backgroundBlurStyle(BlurStyle.Thin)
+      .border({ width: { top: 0.5 }, color: 'rgba(0,0,0,0.05)' })
+      .shadow({
+        radius: 20,
+        color: 'rgba(0,0,0,0.08)',
+        offsetX: 0,
+        offsetY: -4
+      })
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(Colors.backgroundPrimary)
+    .backgroundColor(DT.LIGHT_BG_SECONDARY)
   }
 
   // 页面转场动画 - 从右侧滑入
