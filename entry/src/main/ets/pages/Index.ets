@@ -316,9 +316,9 @@ struct Index {
     return `rgba(255,255,255,${alpha / 255})`
   }
 
-  // Tab 切换动画配置 - 使用 InterpolatingSpring 实现弹簧效果
-  private tabAnimationDuration: number = 400
-  private tabAnimationCurve: Curve = Curve.InterpolatingSpring(0, 1, 180, 16)
+  // Tab 切换动画配置 - 使用 EaseOut 实现平滑动画
+  private tabAnimationDuration: number = 300
+  private tabAnimationCurve: Curve = Curve.EaseOut
 
   // Tab Bar 样式
   @Builder
