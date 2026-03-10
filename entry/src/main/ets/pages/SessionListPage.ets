@@ -151,7 +151,7 @@ struct SessionListPage {
                   SessionItem({
                     session: session,
                     isSelected: this.viewModel.currentSession?.id === session.id,
-                    onItemClick: () => this.selectSession(session),
+                    onItemClick: (): void => { this.selectSession(session) },
                     onDelete: () => {
                       this.sessionToDelete = session
                       this.showDeleteDialog = true
@@ -185,27 +185,30 @@ struct SessionListPage {
       {
         value: '新建',
         icon: $r('app.media.startIcon'),
-        action: () => this.createNewSession()
+        action: (): void => { this.createNewSession() }
       }
     ])
-    .overlay(
-      HmConfirmDialog({
-        confirmVisible: this.showDeleteDialog,
-        confirmTitle: '删除会话',
-        confirmMessage: `确定要删除"${this.sessionToDelete?.title || '未命名会话'}"吗？`,
-        confirmBtnText: '删除',
-        cancelBtnText: '取消',
-        isDanger: true,
-        onConfirm: () => {
-          this.showDeleteDialog = false
-          this.deleteSession()
-        },
-        onCancel: () => {
-          this.showDeleteDialog = false
-          this.sessionToDelete = null
-        }
-      })
-    )
+    .overlay(this.deleteDialogBuilder())
+  }
+
+  @Builder
+  deleteDialogBuilder() {
+    HmConfirmDialog({
+      confirmVisible: this.showDeleteDialog,
+      confirmTitle: '删除会话',
+      confirmMessage: `确定要删除"${this.sessionToDelete?.title || '未命名会话'}"吗？`,
+      confirmBtnText: '删除',
+      cancelBtnText: '取消',
+      isDanger: true,
+      onConfirm: (): void => {
+        this.showDeleteDialog = false
+        this.deleteSession()
+      },
+      onCancel: (): void => {
+        this.showDeleteDialog = false
+        this.sessionToDelete = null
+      }
+    })
   }
 
   @Builder

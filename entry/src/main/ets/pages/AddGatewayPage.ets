@@ -222,7 +222,7 @@ struct AddGatewayPage {
                   btnType: 1,
                   btnWidth: 120,
                   btnDisabled: this.isTesting || !this.gatewayIp,
-                  onBtnClick: () => this.testConnection()
+                  onBtnClick: (): void => { this.testConnection() }
                 })
 
                 HmButton({
@@ -231,7 +231,7 @@ struct AddGatewayPage {
                   btnWidth: 140,
                   btnDisabled: !this.gatewayIp || this.viewModel.isLoading,
                   btnLoading: this.viewModel.isLoading,
-                  onBtnClick: () => this.saveGateway()
+                  onBtnClick: (): void => { this.saveGateway() }
                 })
               }
               .width('100%')
@@ -270,22 +270,25 @@ struct AddGatewayPage {
     .titleMode(NavigationTitleMode.Mini)
     .mode(NavigationMode.Stack)
     .backgroundColor(DT.LIGHT_BG_SECONDARY)
-    .overlay(
-      HmConfirmDialog({
-        confirmVisible: this.showConfirmDialog,
-        confirmTitle: '添加失败',
-        confirmMessage: this.viewModel.errorMessage || '无法连接到网关，是否强制添加？',
-        confirmBtnText: '强制添加',
-        cancelBtnText: '取消',
-        isDanger: true,
-        onConfirm: () => {
-          this.showConfirmDialog = false
-          this.forceSaveGateway()
-        },
-        onCancel: () => {
-          this.showConfirmDialog = false
-        }
-      })
-    )
+    .overlay(this.confirmDialogBuilder())
+  }
+
+  @Builder
+  confirmDialogBuilder() {
+    HmConfirmDialog({
+      confirmVisible: this.showConfirmDialog,
+      confirmTitle: '添加失败',
+      confirmMessage: this.viewModel.errorMessage || '无法连接到网关，是否强制添加？',
+      confirmBtnText: '强制添加',
+      cancelBtnText: '取消',
+      isDanger: true,
+      onConfirm: (): void => {
+        this.showConfirmDialog = false
+        this.forceSaveGateway()
+      },
+      onCancel: (): void => {
+        this.showConfirmDialog = false
+      }
+    })
   }
 }

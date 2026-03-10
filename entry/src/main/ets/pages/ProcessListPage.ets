@@ -140,7 +140,7 @@ struct ProcessListPage {
             btnType: 1,
             btnWidth: 80,
             btnDisabled: this.viewModel.isLoading,
-            onBtnClick: () => this.handleRefresh()
+            onBtnClick: (): void => { this.handleRefresh() }
           })
         }
         .width('100%')
@@ -194,24 +194,27 @@ struct ProcessListPage {
     .titleMode(NavigationTitleMode.Mini)
     .mode(NavigationMode.Stack)
     .backgroundColor(DT.LIGHT_BG_SECONDARY)
-    .overlay(
-      HmConfirmDialog({
-        confirmVisible: this.showTerminateDialog,
-        confirmTitle: '终止进程',
-        confirmMessage: `确定要终止进程"${this.processToTerminate?.name || '未知'}"吗？`,
-        confirmBtnText: '终止',
-        cancelBtnText: '取消',
-        isDanger: true,
-        onConfirm: () => {
-          this.showTerminateDialog = false
-          this.handleTerminateProcess()
-        },
-        onCancel: () => {
-          this.showTerminateDialog = false
-          this.processToTerminate = null
-        }
-      })
-    )
+    .overlay(this.terminateDialogBuilder())
+  }
+
+  @Builder
+  terminateDialogBuilder() {
+    HmConfirmDialog({
+      confirmVisible: this.showTerminateDialog,
+      confirmTitle: '终止进程',
+      confirmMessage: `确定要终止进程"${this.processToTerminate?.name || '未知'}"吗？`,
+      confirmBtnText: '终止',
+      cancelBtnText: '取消',
+      isDanger: true,
+      onConfirm: (): void => {
+        this.showTerminateDialog = false
+        this.handleTerminateProcess()
+      },
+      onCancel: (): void => {
+        this.showTerminateDialog = false
+        this.processToTerminate = null
+      }
+    })
   }
 
   @Builder
