@@ -2,6 +2,11 @@ import { Gateway, GatewayStatus } from '../../models/Gateway';
 import { Colors, Typography } from '../../styles/DesignTokens';
 import { Spacing } from '../../styles/Spacing';
 import { DateUtils } from '../../utils/DateUtils';
+import { promptAction } from '@kit.ArkUI';
+
+interface DialogResult {
+  index: number;
+}
 
 @Component
 export struct GatewayCard {
@@ -9,6 +14,32 @@ export struct GatewayCard {
   @Prop isSelected: boolean = false;
   onConnect?: () => void;
   onDelete?: () => void;
+
+  private showDeleteConfirm(): void {
+    promptAction.showDialog({
+      title: '确认删除网关',
+      message: `确定要删除网关 "${this.gateway?.name || '未命名'}" (${this.gateway?.host || 'unknown'}:${this.gateway?.port || 0}) 吗？`,
+      buttons: [
+        {
+          text: '取消',
+          color: '#999999'
+        },
+        {
+          text: '删除',
+          color: '#FF4D4F'
+        }
+      ]
+    }).then((result: DialogResult) => {
+      if (result.index === 1) {
+        // 用户点击了"删除"
+        if (this.onDelete) {
+          this.onDelete();
+        }
+      }
+    }).catch(() => {
+      // 用户取消了对话框
+    });
+  }
 
   private getStatusColor(): ResourceColor {
     if (!this.gateway) return Colors.textTertiary;
@@ -134,9 +165,7 @@ export struct GatewayCard {
           .fontColor(Colors.error)
           .fontSize(Typography.sizeSmall)
           .onClick(() => {
-            if (this.onDelete) {
-              this.onDelete();
-            }
+            this.showDeleteConfirm();
           })
       }
       .width('100%')

@@ -6,11 +6,12 @@ import { GatewayViewModel } from '../viewmodels/GatewayViewModel';
 import { ChatViewModel } from '../viewmodels/ChatViewModel';
 import { ProcessViewModel } from '../viewmodels/ProcessViewModel';
 import { AgentViewModel } from '../viewmodels/AgentViewModel';
+import { getOpenClawAPIService } from '../services/OpenClawAPIService';
 import { GatewayCard } from '../components/gateway/GatewayCard';
 import { SessionItem } from '../components/chat/SessionItem';
 import { ProcessCard } from '../components/process/ProcessCard';
 import { AgentCard } from '../components/agent/AgentCard';
-import { Gateway } from '../models/Gateway';
+import { Gateway, GatewayStatus } from '../models/Gateway';
 import { Session } from '../models/Session';
 import { Process } from '../models/Process';
 import { Agent } from '../models/Agent';
@@ -32,6 +33,11 @@ struct Index {
     this.initializeViewModels();
   }
 
+  // 页面显示时重新同步网关状态（从其他页面返回时）
+  onPageShow() {
+    this.syncGatewayState();
+  }
+
   private async initializeViewModels(): Promise<void> {
     try {
       await this.gatewayViewModel.initialize();
@@ -45,6 +51,45 @@ struct Index {
       }
     } catch (e) {
       console.error(`[Index] Failed to initialize view models: ${JSON.stringify(e)}`);
+    }
+  }
+
+  private async syncGatewayState(): Promise<void> {
+    try {
+      console.log('[Index] Syncing gateway state...');
+      // 从全局 API Service 获取当前连接的网关
+      const apiService = getOpenClawAPIService();
+      const currentGateway = apiService.getCurrentGateway();
+
+      if (currentGateway) {
+        console.log(`[Index] API service has gateway: ${currentGateway.name}`);
+        // 更新 AgentViewModel 的网关
+        if (this.agentViewModel.currentGateway?.id !== currentGateway.id) {
+          console.log(`[Index] Syncing gateway to AgentViewModel: ${currentGateway.name}`);
+          await this.agentViewModel.setGateway(currentGateway);
+        } else {
+          console.log('[Index] Gateway already synced, refreshing agents...');
+          await this.agentViewModel.refresh();
+        }
+      } else {
+        console.log('[Index] No gateway connected in API service');
+        // 检查 GatewayViewModel 中是否有网关
+        if (this.gatewayViewModel.currentGateway) {
+          console.log(`[Index] Using gateway from GatewayViewModel: ${this.gatewayViewModel.currentGateway.name}`);
+          await this.agentViewModel.setGateway(this.gatewayViewModel.currentGateway);
+        }
+      }
+
+      // 刷新网关列表状态
+      await this.gatewayViewModel.refresh();
+
+      // 刷新进程数据（从已连接的网关获取真实进程）
+      if (this.gatewayViewModel.currentGateway?.status === GatewayStatus.ONLINE) {
+        console.log('[Index] Refreshing processes from gateway...');
+        await this.processViewModel.refresh();
+      }
+    } catch (e) {
+      console.error(`[Index] Failed to sync gateway state: ${JSON.stringify(e)}`);
     }
   }
 
@@ -227,34 +272,231 @@ struct Index {
 
   @Builder
   GatewaysContent() {
-    Column() {
-      Text('网关列表')
-        .fontSize(24)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(Colors.textPrimary)
-        .margin({ top: 100 })
+    Scroll() {
+      Column({ space: SP.L }) {
+        // 网关统计
+        Row({ space: SP.M }) {
+          Column({ space: SP.XS }) {
+            Text(String(this.gatewayViewModel.getTotalCount()))
+              .fontSize(28)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(DT.BRAND_PRIMARY)
+            Text('总网关数')
+              .fontSize(12)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
+          }
+          .layoutWeight(1)
+          .padding(SP.L)
+          .backgroundColor(DT.LIGHT_BG_PRIMARY)
+          .borderRadius(SP.RADIUS_L)
+
+          Column({ space: SP.XS }) {
+            Text(String(this.gatewayViewModel.getOnlineCount()))
+              .fontSize(28)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(DT.SUCCESS)
+            Text('在线网关')
+              .fontSize(12)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
+          }
+          .layoutWeight(1)
+          .padding(SP.L)
+          .backgroundColor(DT.LIGHT_BG_PRIMARY)
+          .borderRadius(SP.RADIUS_L)
+
+          Column({ space: SP.XS }) {
+            Text(String(this.gatewayViewModel.gateways.length - this.gatewayViewModel.getOnlineCount()))
+              .fontSize(28)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(DT.WARNING)
+            Text('离线网关')
+              .fontSize(12)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
+          }
+          .layoutWeight(1)
+          .padding(SP.L)
+          .backgroundColor(DT.LIGHT_BG_PRIMARY)
+          .borderRadius(SP.RADIUS_L)
+        }
+        .width('100%')
+        .padding(SP.L)
+
+        // 网关列表标题
+        Row() {
+          Text('网关列表')
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(DT.LIGHT_TEXT_PRIMARY)
+          Blank()
+          Button('刷新')
+            .fontSize(12)
+            .fontColor(DT.BRAND_PRIMARY)
+            .backgroundColor('transparent')
+            .enabled(!this.gatewayViewModel.isLoading)
+            .onClick(() => {
+              this.gatewayViewModel.refresh()
+            })
+        }
+        .width('100%')
+        .padding({ left: SP.L, right: SP.L })
+
+        // 网关列表
+        if (this.gatewayViewModel.isLoading) {
+          Column({ space: SP.S }) {
+            Text('加载中...')
+              .fontSize(14)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
+          }
+          .margin({ top: 50 })
+        } else if (this.gatewayViewModel.gateways.length === 0) {
+          Column({ space: SP.S }) {
+            Text('暂无网关')
+              .fontSize(14)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
+            Text('点击添加网关按钮开始')
+              .fontSize(12)
+              .fontColor(DT.LIGHT_TEXT_TERTIARY)
+            Button('添加网关')
+              .fontSize(12)
+              .fontColor(DT.BRAND_PRIMARY)
+              .backgroundColor('transparent')
+              .margin({ top: SP.S })
+              .onClick(() => {
+                router.pushUrl({ url: 'pages/AddGatewayPage' })
+              })
+          }
+          .margin({ top: 50 })
+          .alignItems(HorizontalAlign.Center)
+        } else {
+          ForEach(this.gatewayViewModel.gateways, (gateway: Gateway) => {
+            GatewayCard({
+              gateway: gateway,
+              isSelected: this.gatewayViewModel.currentGateway?.id === gateway.id,
+              onConnect: () => {
+                this.gatewayViewModel.connectGateway(gateway)
+              },
+              onDelete: () => {
+                this.gatewayViewModel.deleteGateway(gateway.id)
+              }
+            })
+          }, (gateway: Gateway) => gateway.id)
+        }
+
+        // 底部安全间距
+        Column().height(20)
+      }
+      .width('100%')
+      .padding({ bottom: SP.L })
     }
     .width('100%')
     .layoutWeight(1)
-    .onClick(() => {
-      router.pushUrl({ url: 'pages/GatewayListPage' });
-    })
   }
 
   @Builder
   ProcessesContent() {
-    Column() {
-      Text('进程监控')
-        .fontSize(24)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(Colors.textPrimary)
-        .margin({ top: 100 })
+    Scroll() {
+      Column({ space: SP.L }) {
+        // 进程统计
+        Row({ space: SP.M }) {
+          Column({ space: SP.XS }) {
+            Text(String(this.processViewModel.processes.length))
+              .fontSize(28)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(DT.BRAND_PRIMARY)
+            Text('总进程数')
+              .fontSize(12)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
+          }
+          .layoutWeight(1)
+          .padding(SP.L)
+          .backgroundColor(DT.LIGHT_BG_PRIMARY)
+          .borderRadius(SP.RADIUS_L)
+
+          Column({ space: SP.XS }) {
+            Text(String(this.processViewModel.getRunningCount()))
+              .fontSize(28)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(DT.SUCCESS)
+            Text('运行中')
+              .fontSize(12)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
+          }
+          .layoutWeight(1)
+          .padding(SP.L)
+          .backgroundColor(DT.LIGHT_BG_PRIMARY)
+          .borderRadius(SP.RADIUS_L)
+
+          Column({ space: SP.XS }) {
+            Text(`${this.processViewModel.getTotalMemoryUsage().toFixed(0)}MB`)
+              .fontSize(28)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(DT.WARNING)
+            Text('内存占用')
+              .fontSize(12)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
+          }
+          .layoutWeight(1)
+          .padding(SP.L)
+          .backgroundColor(DT.LIGHT_BG_PRIMARY)
+          .borderRadius(SP.RADIUS_L)
+        }
+        .width('100%')
+        .padding(SP.L)
+
+        // 进程列表标题
+        Row() {
+          Text('进程列表')
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(DT.LIGHT_TEXT_PRIMARY)
+          Blank()
+          Button('刷新')
+            .fontSize(12)
+            .fontColor(DT.BRAND_PRIMARY)
+            .backgroundColor('transparent')
+            .enabled(!this.processViewModel.isLoading)
+            .onClick(() => {
+              this.processViewModel.refresh()
+            })
+        }
+        .width('100%')
+        .padding({ left: SP.L, right: SP.L })
+
+        // 进程列表
+        if (this.processViewModel.isLoading) {
+          Column({ space: SP.S }) {
+            Text('加载中...')
+              .fontSize(14)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
+          }
+          .margin({ top: 50 })
+        } else if (this.processViewModel.processes.length === 0) {
+          Column({ space: SP.S }) {
+            Text('暂无进程')
+              .fontSize(14)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
+            Text('连接网关后将显示进程信息')
+              .fontSize(12)
+              .fontColor(DT.LIGHT_TEXT_TERTIARY)
+          }
+          .margin({ top: 50 })
+          .alignItems(HorizontalAlign.Center)
+        } else {
+          ForEach(this.processViewModel.processes, (process: Process) => {
+            ProcessCard({
+              process: process
+            })
+          }, (process: Process) => process.id)
+        }
+
+        // 底部安全间距
+        Column().height(20)
+      }
+      .width('100%')
+      .padding({ bottom: SP.L })
     }
     .width('100%')
     .layoutWeight(1)
-    .onClick(() => {
-      router.pushUrl({ url: 'pages/ProcessListPage' });
-    })
   }
 
   @Builder
@@ -360,15 +602,48 @@ struct Index {
 
         // Agent 列表
         if (this.agentViewModel.isLoading) {
-          Text('加载中...')
-            .fontSize(14)
-            .fontColor(DT.LIGHT_TEXT_SECONDARY)
-            .margin({ top: 50 })
+          Column({ space: SP.S }) {
+            Text('加载中...')
+              .fontSize(14)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
+            // 显示调试信息
+            if (this.agentViewModel.currentGateway) {
+              Text(`正在从 ${this.agentViewModel.currentGateway.host}:${this.agentViewModel.currentGateway.port} 加载...`)
+                .fontSize(10)
+                .fontColor(DT.LIGHT_TEXT_TERTIARY)
+            }
+          }
+          .margin({ top: 50 })
         } else if (this.agentViewModel.agents.length === 0) {
-          Text('暂无 Agent')
-            .fontSize(14)
-            .fontColor(DT.LIGHT_TEXT_SECONDARY)
-            .margin({ top: 50 })
+          Column({ space: SP.S }) {
+            Text('暂无 Agent')
+              .fontSize(14)
+              .fontColor(DT.LIGHT_TEXT_SECONDARY)
+            // 显示调试信息
+            if (this.agentViewModel.currentGateway) {
+              Text(`已连接: ${this.agentViewModel.currentGateway.host}:${this.agentViewModel.currentGateway.port}`)
+                .fontSize(10)
+                .fontColor(DT.LIGHT_TEXT_TERTIARY)
+              Text('点击刷新按钮重试')
+                .fontSize(10)
+                .fontColor(DT.BRAND_PRIMARY)
+            } else {
+              Text('请先连接网关')
+                .fontSize(10)
+                .fontColor(DT.WARNING)
+            }
+            // 手动刷新按钮
+            Button('手动刷新')
+              .fontSize(12)
+              .fontColor(DT.BRAND_PRIMARY)
+              .backgroundColor('transparent')
+              .margin({ top: SP.S })
+              .onClick(() => {
+                this.agentViewModel.refresh()
+              })
+          }
+          .margin({ top: 50 })
+          .alignItems(HorizontalAlign.Center)
         } else {
           ForEach(this.agentViewModel.agents, (agent: Agent) => {
             AgentCard({

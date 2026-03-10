@@ -31,14 +31,14 @@ export class GatewayViewModel {
     this.isLoading = true;
     this.errorMessage = '';
     try {
-      const gateways = await this.repository.getAll();
-      // 创建新的数组和对象，避免直接修改
+      // 直接操作当前内存中的网关列表，避免从 storage 重新加载导致覆盖
       const updatedGateways: Gateway[] = [];
-      for (let i = 0; i < gateways.length; i++) {
-        const gateway = new Gateway(gateways[i]);
+      for (let i = 0; i < this.gateways.length; i++) {
+        const gateway = new Gateway(this.gateways[i]);
         try {
           const result = await this.repository.checkStatus(gateway);
           gateway.status = result.status;
+          gateway.lastSeen = Date.now();
           if (result.error && i === 0) {
             this.errorMessage = result.error;
           }
@@ -47,6 +47,8 @@ export class GatewayViewModel {
           gateway.status = GatewayStatus.ERROR;
         }
         updatedGateways.push(gateway);
+        // 更新 storage 中的状态
+        await this.repository.update(gateway);
       }
       this.gateways = updatedGateways;
     } catch (e) {
@@ -86,6 +88,12 @@ export class GatewayViewModel {
           this.errorMessage = `无法连接到 ${gateway.host}:${gateway.port}`;
           return false;
         }
+      }
+
+      // 如果验证通过，设置状态为在线
+      if (!skipValidation) {
+        gateway.status = GatewayStatus.ONLINE;
+        gateway.lastSeen = Date.now();
       }
 
       const newGateway = await this.repository.add(gateway);

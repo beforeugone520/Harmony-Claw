@@ -11,6 +11,26 @@ interface ErrorWithCode {
   code?: number;
 }
 
+// API 返回的原始数据结构
+class ApiResponseData {
+  code?: number;
+  data?: object;
+  message?: string;
+
+  constructor(obj?: object) {
+    if (obj) {
+      const o = obj as Record<string, object | number | string | undefined>;
+      if (o.code !== undefined) this.code = o.code as number;
+      if (o.data !== undefined) this.data = o.data as object;
+      if (o.message !== undefined) this.message = o.message as string;
+    }
+  }
+
+  hasCodeAndData(): boolean {
+    return this.code !== undefined && this.data !== undefined;
+  }
+}
+
 export class HttpService {
   private baseUrl: string = '';
   private timeout: number = 10000;
@@ -84,10 +104,18 @@ export class HttpService {
         } else {
           console.log(`[HttpService] GET Success: ${data.responseCode}`);
           try {
-            const result = JSON.parse(data.result.toString()) as HttpResponse<T>;
-            resolve(result);
+            const jsonObj = JSON.parse(data.result.toString()) as object;
+            const parsed = new ApiResponseData(jsonObj);
+            // 检查是否已经是 { code, data, message } 格式
+            if (parsed.hasCodeAndData()) {
+              resolve({ code: parsed.code as number, data: parsed.data as T, message: parsed.message || 'success' });
+            } else {
+              // 包装为 HttpResponse 格式
+              resolve({ code: data.responseCode, data: jsonObj as T, message: 'success' });
+            }
           } catch (e) {
-            resolve({ code: 200, data: data.result as T, message: 'success' });
+            // 不是 JSON，直接返回
+            resolve({ code: data.responseCode, data: data.result as T, message: 'success' });
           }
         }
         httpRequest.destroy();
@@ -126,10 +154,15 @@ export class HttpService {
           reject({ code: err.code, message: err.message, data: null as T });
         } else {
           try {
-            const result = JSON.parse(data.result.toString()) as HttpResponse<T>;
-            resolve(result);
+            const jsonObj = JSON.parse(data.result.toString()) as object;
+            const parsed = new ApiResponseData(jsonObj);
+            if (parsed.hasCodeAndData()) {
+              resolve({ code: parsed.code as number, data: parsed.data as T, message: parsed.message || 'success' });
+            } else {
+              resolve({ code: data.responseCode, data: jsonObj as T, message: 'success' });
+            }
           } catch (e) {
-            resolve({ code: 200, data: data.result as T, message: 'success' });
+            resolve({ code: data.responseCode, data: data.result as T, message: 'success' });
           }
         }
         httpRequest.destroy();
@@ -160,10 +193,15 @@ export class HttpService {
           reject({ code: err.code, message: err.message, data: null as T });
         } else {
           try {
-            const result = JSON.parse(data.result.toString()) as HttpResponse<T>;
-            resolve(result);
+            const jsonObj = JSON.parse(data.result.toString()) as object;
+            const parsed = new ApiResponseData(jsonObj);
+            if (parsed.hasCodeAndData()) {
+              resolve({ code: parsed.code as number, data: parsed.data as T, message: parsed.message || 'success' });
+            } else {
+              resolve({ code: data.responseCode, data: jsonObj as T, message: 'success' });
+            }
           } catch (e) {
-            resolve({ code: 200, data: data.result as T, message: 'success' });
+            resolve({ code: data.responseCode, data: data.result as T, message: 'success' });
           }
         }
         httpRequest.destroy();

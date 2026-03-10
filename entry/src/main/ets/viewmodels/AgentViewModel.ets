@@ -49,9 +49,14 @@ export class AgentViewModel {
    * Set the current gateway and load agents from it
    */
   async setGateway(gateway: Gateway): Promise<void> {
+    const isDifferentGateway = this.currentGateway?.id !== gateway.id;
     this.currentGateway = gateway;
     this.apiService.setGateway(gateway);
-    console.log(`[AgentViewModel] Gateway set to ${gateway.host}:${gateway.port}`);
+    console.log(`[AgentViewModel] Gateway set to ${gateway.name} (${gateway.host}:${gateway.port})`);
+    // 如果是不同的网关，清空之前的 agent 列表
+    if (isDifferentGateway) {
+      this.agents = [];
+    }
     await this.loadAgents();
   }
 
@@ -66,12 +71,21 @@ export class AgentViewModel {
     this.isLoading = true;
     this.errorMessage = '';
     try {
-      this.agents = await this.repository.getAgents();
+      console.log('[AgentViewModel] Loading agents from repository...');
+      const agents = await this.repository.getAgents();
+      console.log(`[AgentViewModel] Repository returned ${agents.length} agents`);
+
       // Load metrics for each agent
-      for (const agent of this.agents) {
-        agent.metrics = await this.repository.getAgentMetrics(agent.id);
+      for (const agent of agents) {
+        try {
+          agent.metrics = await this.repository.getAgentMetrics(agent.id);
+        } catch (e) {
+          console.warn(`[AgentViewModel] Failed to load metrics for ${agent.id}:`, e);
+        }
       }
-      console.log(`[AgentViewModel] Loaded ${this.agents.length} agents`);
+
+      this.agents = agents;
+      console.log(`[AgentViewModel] Loaded ${this.agents.length} agents total`);
     } catch (e) {
       console.error(`[AgentViewModel] Failed to load agents: ${JSON.stringify(e)}`);
       this.errorMessage = '加载 Agent 失败';

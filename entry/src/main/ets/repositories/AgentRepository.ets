@@ -78,8 +78,17 @@ export class AgentRepository {
   async getAgents(): Promise<Agent[]> {
     try {
       const response = await this.http.get<AgentListResponse>(ApiEndpoints.AGENTS);
-      if (response.code === 200 && response.data) {
+      console.log('[AgentRepository] getAgents response:', JSON.stringify(response));
+      // Bridge Server 返回 { data: [...], total: N }，没有 code 字段
+      // 或者 HTTP 200 时直接返回数据
+      if (response.data && response.data.data && response.data.data.length > 0) {
+        console.log(`[AgentRepository] Found ${response.data.data.length} agents`);
         return this.parseAgents(response.data.data);
+      }
+      // 如果 response 直接是数组（某些情况）
+      if (Array.isArray(response.data)) {
+        console.log(`[AgentRepository] Found ${response.data.length} agents (direct array)`);
+        return this.parseAgents(response.data as AgentApiData[]);
       }
     } catch (e) {
       console.error('[AgentRepository] Failed to get agents from API:', e);

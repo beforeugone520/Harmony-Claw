@@ -1,0 +1,23 @@
+{
+  "name": "openclaw-bridge-server",
+  "version": "1.0.0",
+  "description": "Bridge Server for Harmony-Claw to provide OpenClaw agent and process management",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "openclaw",
+    "harmony-claw",
+    "bridge",
+    "agent",
+    "process"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

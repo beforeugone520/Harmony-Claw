@@ -5,7 +5,6 @@ import { Spacing, Layout } from '../../styles/Spacing';
 @Component
 export struct ProcessCard {
   @Prop process: Process;
-  onTerminate?: () => void;
 
   private getStatusColor(): ResourceColor {
     switch (this.process.status) {
@@ -85,19 +84,8 @@ export struct ProcessCard {
       }
       .width('100%')
 
-      // Resources
-      Row({ space: Spacing.lg }) {
-        Column({ space: Spacing.xs }) {
-          Text('CPU')
-            .fontSize(Typography.sizeCaption)
-            .fontColor(Colors.textTertiary)
-
-          Text(`${this.process.cpu.toFixed(1)}%`)
-            .fontSize(Typography.sizeBody)
-            .fontColor(Colors.textPrimary)
-        }
-        .layoutWeight(1)
-
+      // Memory info
+      Row() {
         Column({ space: Spacing.xs }) {
           Text('内存')
             .fontSize(Typography.sizeCaption)
@@ -108,21 +96,6 @@ export struct ProcessCard {
             .fontColor(Colors.textPrimary)
         }
         .layoutWeight(1)
-
-        // Terminate button
-        if (this.process.status === ProcessStatus.RUNNING) {
-          Button('终止')
-            .width(80)
-            .height(36)
-            .backgroundColor(Colors.error)
-            .fontColor(Colors.textInverse)
-            .fontSize(Typography.sizeSmall)
-            .onClick(() => {
-              if (this.onTerminate) {
-                this.onTerminate();
-              }
-            })
-        }
       }
       .width('100%')
     }

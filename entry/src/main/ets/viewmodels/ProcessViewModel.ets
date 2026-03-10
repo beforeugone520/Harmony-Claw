@@ -21,7 +21,9 @@ export class ProcessViewModel {
   async loadProcesses(): Promise<void> {
     this.isLoading = true;
     try {
+      console.log('[ProcessViewModel] Loading processes...');
       this.processes = await this.repository.getProcesses();
+      console.log(`[ProcessViewModel] Loaded ${this.processes.length} processes`);
     } catch (e) {
       console.error(`[ProcessViewModel] Failed to load processes: ${JSON.stringify(e)}`);
       this.processes = [];

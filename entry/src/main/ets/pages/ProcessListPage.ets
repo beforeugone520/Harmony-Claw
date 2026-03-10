@@ -6,7 +6,7 @@ import { ProcessViewModel } from '../viewmodels/ProcessViewModel'
 import { ProcessCard } from '../components/process/ProcessCard'
 import { Process } from '../models/Process'
 import { DesignTokens as DT, Spacing as SP, Typography as TYP } from '../constants'
-import { HmButton, HmInfoCard, HmConfirmDialog, ToastManager } from '../components/common'
+import { HmInfoCard, ToastManager } from '../components/common'
 import { LoadingState } from '../components/LoadingState'
 import { EmptyState } from '../components/EmptyState'
 
@@ -15,8 +15,6 @@ import { EmptyState } from '../components/EmptyState'
 struct ProcessListPage {
   @State viewModel: ProcessViewModel = new ProcessViewModel()
   @State isRefreshing: boolean = false
-  @State showTerminateDialog: boolean = false
-  @State processToTerminate: Process | null = null
   @State autoRefresh: boolean = false
   private refreshTimer: number = -1
 
@@ -53,104 +51,43 @@ struct ProcessListPage {
     ToastManager.success('已刷新')
   }
 
-  private async handleTerminateProcess() {
-    if (!this.processToTerminate) return
+  @Builder
+  statsBuilder() {
+    Row({ space: SP.CARD_GAP }) {
+      HmInfoCard({
+        infoTitle: '运行中',
+        infoValue: String(this.viewModel.getRunningCount()),
+        infoIcon: '⚙️',
+        infoIconBg: DT.SUCCESS_BG,
+        infoIconColor: DT.SUCCESS
+      })
+        .layoutWeight(1)
 
-    ToastManager.loading('终止中...')
-    try {
-      await this.viewModel.terminateProcess(this.processToTerminate.id)
-      ToastManager.success('进程已终止')
-    } catch (e) {
-      ToastManager.error('终止失败')
-    } finally {
-      ToastManager.hideLoading()
-      this.processToTerminate = null
+      HmInfoCard({
+        infoTitle: '内存',
+        infoValue: `${this.viewModel.getTotalMemoryUsage().toFixed(0)}`,
+        infoUnit: 'MB',
+        infoIcon: '💾',
+        infoIconBg: DT.WARNING_BG,
+        infoIconColor: DT.WARNING
+      })
+        .layoutWeight(1)
     }
-  }
-
-  private toggleAutoRefresh() {
-    this.autoRefresh = !this.autoRefresh
-    if (this.autoRefresh) {
-      this.startAutoRefresh()
-      ToastManager.info('已开启自动刷新')
-    } else {
-      this.stopAutoRefresh()
-      ToastManager.info('已关闭自动刷新')
-    }
+    .width('100%')
+    .padding({
+      left: SP.PAGE_HORIZONTAL,
+      right: SP.PAGE_HORIZONTAL,
+      top: SP.M
+    })
   }
 
   build() {
     Navigation() {
       Column({ space: SP.CARD_GAP }) {
-        // 统计卡片区域
-        Row({ space: SP.CARD_GAP }) {
-          HmInfoCard({
-            infoTitle: '运行中',
-            infoValue: String(this.viewModel.getRunningCount()),
-            infoIcon: '⚙️',
-            infoIconBg: DT.SUCCESS_BG,
-            infoIconColor: DT.SUCCESS
-          })
-          .layoutWeight(1)
+        // Stats
+        this.statsBuilder()
 
-          HmInfoCard({
-            infoTitle: 'CPU',
-            infoValue: `${this.viewModel.getTotalCpuUsage().toFixed(1)}`,
-            infoUnit: '%',
-            infoIcon: '💻',
-            infoIconBg: DT.BRAND_LIGHT,
-            infoIconColor: DT.BRAND_PRIMARY
-          })
-          .layoutWeight(1)
-
-          HmInfoCard({
-            infoTitle: '内存',
-            infoValue: `${this.viewModel.getTotalMemoryUsage().toFixed(0)}`,
-            infoUnit: 'MB',
-            infoIcon: '💾',
-            infoIconBg: DT.WARNING_BG,
-            infoIconColor: DT.WARNING
-          })
-          .layoutWeight(1)
-        }
-        .width('100%')
-        .padding({
-          left: SP.PAGE_HORIZONTAL,
-          right: SP.PAGE_HORIZONTAL,
-          top: SP.M
-        })
-
-        // 工具栏
-        Row({ space: SP.M }) {
-          Row({ space: SP.S }) {
-            Toggle({ type: ToggleType.Switch, isOn: $$this.autoRefresh })
-              .selectedColor(DT.BRAND_PRIMARY)
-              .onChange((isOn: boolean) => {
-                this.toggleAutoRefresh()
-              })
-            Text('自动刷新')
-              .fontSize(TYP.SIZE_CAPTION)
-              .fontColor(DT.LIGHT_TEXT_SECONDARY)
-          }
-
-          Blank()
-
-          HmButton({
-            btnText: '刷新',
-            btnType: 1,
-            btnWidth: 80,
-            btnDisabled: this.viewModel.isLoading,
-            onBtnClick: (): void => { this.handleRefresh() }
-          })
-        }
-        .width('100%')
-        .height(48)
-        .padding({
-          left: SP.PAGE_HORIZONTAL,
-          right: SP.PAGE_HORIZONTAL
-        })
-
-        // 进程列表
+        // Content
         if (this.viewModel.isLoading && this.viewModel.processes.length === 0) {
           LoadingState({ message: '加载中...' })
         } else if (this.viewModel.processes.length === 0) {
@@ -164,18 +101,9 @@ struct ProcessListPage {
               ForEach(this.viewModel.processes, (process: Process) => {
                 ListItem() {
                   ProcessCard({
-                    process: process,
-                    onTerminate: () => {
-                      this.processToTerminate = process
-                      this.showTerminateDialog = true
-                    }
+                    process: process
                   })
                 }
-                .swipeAction({
-                  end: {
-                    builder: () => this.TerminateButton(process)
-                  }
-                })
               }, (process: Process) => process.id)
             }
             .width('100%')
@@ -194,42 +122,5 @@ struct ProcessListPage {
     .titleMode(NavigationTitleMode.Mini)
     .mode(NavigationMode.Stack)
     .backgroundColor(DT.LIGHT_BG_SECONDARY)
-    .overlay(this.terminateDialogBuilder())
-  }
-
-  @Builder
-  terminateDialogBuilder() {
-    HmConfirmDialog({
-      confirmVisible: this.showTerminateDialog,
-      confirmTitle: '终止进程',
-      confirmMessage: `确定要终止进程"${this.processToTerminate?.name || '未知'}"吗？`,
-      confirmBtnText: '终止',
-      cancelBtnText: '取消',
-      isDanger: true,
-      onConfirm: (): void => {
-        this.showTerminateDialog = false
-        this.handleTerminateProcess()
-      },
-      onCancel: (): void => {
-        this.showTerminateDialog = false
-        this.processToTerminate = null
-      }
-    })
-  }
-
-  @Builder
-  TerminateButton(process: Process) {
-    Column() {
-      Text('⏹')
-        .fontSize(20)
-    }
-    .width(64)
-    .height(80)
-    .backgroundColor(DT.ERROR)
-    .justifyContent(FlexAlign.Center)
-    .onClick(() => {
-      this.processToTerminate = process
-      this.showTerminateDialog = true
-    })
   }
 }
