@@ -33,30 +33,6 @@ struct Index {
     });
   }
 
-  @Builder
-  TabItemBuilder(icon: string, title: string, index: number) {
-    Column({ space: 4 }) {
-      Text(icon)
-        .fontSize(22)
-        .fontColor(this.selectedTabIndex === index ? DT.BRAND_PRIMARY : DT.LIGHT_TEXT_TERTIARY)
-        .scale({ x: this.selectedTabIndex === index ? 1.1 : 1, y: this.selectedTabIndex === index ? 1.1 : 1 })
-        .animation({ duration: 200, curve: Curve.EaseOut })
-
-      Text(title)
-        .fontSize(11)
-        .fontColor(this.selectedTabIndex === index ? DT.BRAND_PRIMARY : DT.LIGHT_TEXT_TERTIARY)
-        .fontWeight(this.selectedTabIndex === index ? FontWeight.Medium : FontWeight.Regular)
-        .scale({ x: this.selectedTabIndex === index ? 1.05 : 1, y: this.selectedTabIndex === index ? 1.05 : 1 })
-        .animation({ duration: 200, curve: Curve.EaseOut })
-    }
-    .layoutWeight(1)
-    .height('100%')
-    .justifyContent(FlexAlign.Center)
-    .onClick(() => {
-      this.selectedTabIndex = index;
-    })
-  }
-
   // Scroller for dashboard
   private dashboardScroller: Scroller = new Scroller()
 
@@ -340,8 +316,82 @@ struct Index {
     return `rgba(255,255,255,${alpha / 255})`
   }
 
+  // Tab 切换动画配置
+  private tabAnimationDuration: number = 350
+  private tabAnimationCurve: Curve = Curve.Spring({
+    mass: 1,
+    stiffness: 180,
+    damping: 16
+  })
+
+  // Tab Bar 样式
+  @Builder
+  TabBarBuilder(icon: string, title: string, index: number) {
+    Column({ space: 4 }) {
+      Text(icon)
+        .fontSize(22)
+        .fontColor(this.selectedTabIndex === index ? DT.BRAND_PRIMARY : DT.LIGHT_TEXT_TERTIARY)
+        .scale({ x: this.selectedTabIndex === index ? 1.15 : 1, y: this.selectedTabIndex === index ? 1.15 : 1 })
+        .animation({
+          duration: 250,
+          curve: this.tabAnimationCurve
+        })
+
+      Text(title)
+        .fontSize(11)
+        .fontColor(this.selectedTabIndex === index ? DT.BRAND_PRIMARY : DT.LIGHT_TEXT_TERTIARY)
+        .fontWeight(this.selectedTabIndex === index ? FontWeight.Medium : FontWeight.Regular)
+        .scale({ x: this.selectedTabIndex === index ? 1.05 : 1, y: this.selectedTabIndex === index ? 1.05 : 1 })
+        .animation({
+          duration: 250,
+          curve: this.tabAnimationCurve
+        })
+    }
+    .width('100%')
+    .height('100%')
+    .justifyContent(FlexAlign.Center)
+  }
+
   build() {
     Stack({ alignContent: Alignment.TopStart }) {
+      // Tabs 主内容区域
+      Tabs({ barPosition: BarPosition.End, index: $$this.selectedTabIndex }) {
+        TabContent() {
+          this.DashboardContent()
+        }
+        .tabBar(this.TabBarBuilder('🏠', '首页', 0))
+
+        TabContent() {
+          this.GatewaysContent()
+        }
+        .tabBar(this.TabBarBuilder('🌐', '网关', 1))
+
+        TabContent() {
+          this.ProcessesContent()
+        }
+        .tabBar(this.TabBarBuilder('⚙️', '进程', 2))
+
+        TabContent() {
+          this.SettingsContent()
+        }
+        .tabBar(this.TabBarBuilder('⚙️', '设置', 3))
+      }
+      .width('100%')
+      .height('100%')
+      .vertical(false)
+      .scrollable(true)
+      .animationDuration(this.tabAnimationDuration)
+      .animationCurve(this.tabAnimationCurve)
+      .barWidth('100%')
+      .barHeight(Layout.tabBarHeight)
+      .barBackgroundColor('rgba(255,255,255,0.85)')
+      .barBackgroundBlurStyle(BlurStyle.Thin)
+      .padding({ top: Layout.headerHeight, bottom: Layout.tabBarHeight })
+      .backgroundColor(DT.LIGHT_BG_SECONDARY)
+      .onChange((index: number) => {
+        this.selectedTabIndex = index
+      })
+
       // Header with dynamic blur effect
       Row() {
         Text('Harmony Claw')
@@ -369,44 +419,7 @@ struct Index {
       .padding({ left: SP.L, right: SP.L })
       .backgroundColor(this.getHeaderBgColor())
       .backgroundBlurStyle(this.headerBlurStyle)
-      .zIndex(100) // 确保标题栏在最上层
-
-      // Content
-      Stack({ alignContent: Alignment.TopStart }) {
-        if (this.selectedTabIndex === 0) {
-          this.DashboardContent()
-        } else if (this.selectedTabIndex === 1) {
-          this.GatewaysContent()
-        } else if (this.selectedTabIndex === 2) {
-          this.ProcessesContent()
-        } else {
-          this.SettingsContent()
-        }
-      }
-      .layoutWeight(1)
-      .width('100%')
-      .padding({ top: Layout.headerHeight })
-
-      // Bottom Tab Bar with blur effect
-      Row() {
-        this.TabItemBuilder('🏠', '首页', 0)
-        this.TabItemBuilder('🌐', '网关', 1)
-        this.TabItemBuilder('⚙️', '进程', 2)
-        this.TabItemBuilder('⚙️', '设置', 3)
-      }
-      .width('100%')
-      .height(Layout.tabBarHeight)
-      .backgroundColor('rgba(255,255,255,0.85)')
-      .backgroundBlurStyle(BlurStyle.Thin)
-      .border({ width: { top: 0.5 }, color: 'rgba(0,0,0,0.05)' })
-      .shadow({
-        radius: 20,
-        color: 'rgba(0,0,0,0.08)',
-        offsetX: 0,
-        offsetY: -4
-      })
-      .position({ x: 0, y: '100%' })
-      .translate({ y: -Layout.tabBarHeight })
+      .zIndex(100)
     }
     .width('100%')
     .height('100%')
