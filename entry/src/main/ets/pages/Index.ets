@@ -22,7 +22,7 @@ struct Index {
 
   // 动态模糊状态
   @State headerOpacity: number = 0
-  @State headerBlurStyle: BlurStyle = BlurStyle.None
+  @State headerBlurStyle: BlurStyle = BlurStyle.NONE
 
   aboutToAppear() {
     this.gatewayViewModel.initialize().catch((e: Error) => {
@@ -207,14 +207,14 @@ struct Index {
 
       if (currentY <= threshold) {
         this.headerOpacity = 0
-        this.headerBlurStyle = BlurStyle.None
+        this.headerBlurStyle = BlurStyle.NONE
       } else if (currentY >= maxScroll) {
         this.headerOpacity = 1
         this.headerBlurStyle = BlurStyle.Thin
       } else {
         const progress = (currentY - threshold) / (maxScroll - threshold)
         this.headerOpacity = progress
-        this.headerBlurStyle = progress > 0.5 ? BlurStyle.Thin : BlurStyle.None
+        this.headerBlurStyle = progress > 0.5 ? BlurStyle.Thin : BlurStyle.NONE
       }
     })
   }
