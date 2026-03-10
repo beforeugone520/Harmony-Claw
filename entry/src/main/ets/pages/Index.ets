@@ -20,6 +20,10 @@ struct Index {
   @State chatViewModel: ChatViewModel = new ChatViewModel();
   @State processViewModel: ProcessViewModel = new ProcessViewModel();
 
+  // 动态模糊状态
+  @State headerOpacity: number = 0
+  @State headerBlurStyle: BlurStyle = BlurStyle.None
+
   aboutToAppear() {
     this.gatewayViewModel.initialize().catch((e: Error) => {
       console.error(`[Index] Failed to initialize gatewayViewModel: ${JSON.stringify(e)}`);
@@ -53,9 +57,12 @@ struct Index {
     })
   }
 
+  // Scroller for dashboard
+  private dashboardScroller: Scroller = new Scroller()
+
   @Builder
   DashboardContent() {
-    Scroll() {
+    Scroll(this.dashboardScroller) {
       Column({ space: SP.L }) {
         // Stats Cards
         Row({ space: SP.M }) {
@@ -183,11 +190,33 @@ struct Index {
 
         // Recent Processes (disabled for stability)
         // ForEach removed due to ArkTS 6.x compatibility issues
+
+        // 底部安全间距
+        Column().height(20)
       }
       .width('100%')
       .padding(SP.L)
     }
     .layoutWeight(1)
+    .scrollBar(BarState.Auto)
+    .onWillScroll((xOffset: number, yOffset: number) => {
+      // 根据滚动偏移计算标题栏效果
+      const currentY = this.dashboardScroller.currentOffset().yOffset
+      const threshold = 50
+      const maxScroll = 150
+
+      if (currentY <= threshold) {
+        this.headerOpacity = 0
+        this.headerBlurStyle = BlurStyle.None
+      } else if (currentY >= maxScroll) {
+        this.headerOpacity = 1
+        this.headerBlurStyle = BlurStyle.Thin
+      } else {
+        const progress = (currentY - threshold) / (maxScroll - threshold)
+        this.headerOpacity = progress
+        this.headerBlurStyle = progress > 0.5 ? BlurStyle.Thin : BlurStyle.None
+      }
+    })
   }
 
   @Builder
@@ -305,9 +334,31 @@ struct Index {
     .layoutWeight(1)
   }
 
+  // 获取动态标题栏背景色
+  private getHeaderBgColor(): ResourceColor {
+    const alpha = Math.floor(this.headerOpacity * 0.85 * 255)
+    return `rgba(255,255,255,${alpha / 255})`
+  }
+
   build() {
-    Column() {
-      // Header with blur effect
+    Stack({ alignContent: Alignment.TopStart }) {
+      // Content
+      Column() {
+        if (this.selectedTabIndex === 0) {
+          this.DashboardContent()
+        } else if (this.selectedTabIndex === 1) {
+          this.GatewaysContent()
+        } else if (this.selectedTabIndex === 2) {
+          this.ProcessesContent()
+        } else {
+          this.SettingsContent()
+        }
+      }
+      .width('100%')
+      .height('100%')
+      .padding({ top: Layout.headerHeight }) // 为标题栏留出空间
+
+      // Header with dynamic blur effect
       Row() {
         Text('Harmony Claw')
           .fontSize(20)
@@ -332,8 +383,9 @@ struct Index {
       .width('100%')
       .height(Layout.headerHeight)
       .padding({ left: SP.L, right: SP.L })
-      .backgroundColor('rgba(255,255,255,0.85)')
-      .backgroundBlurStyle(BlurStyle.Thin)
+      .backgroundColor(this.getHeaderBgColor())
+      .backgroundBlurStyle(this.headerBlurStyle)
+      .zIndex(100) // 确保标题栏在最上层
 
       // Content
       Stack({ alignContent: Alignment.TopStart }) {
@@ -368,6 +420,8 @@ struct Index {
         offsetX: 0,
         offsetY: -4
       })
+      .position({ x: 0, y: '100%' })
+      .translate({ y: -Layout.tabBarHeight })
     }
     .width('100%')
     .height('100%')
