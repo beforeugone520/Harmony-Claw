@@ -229,85 +229,128 @@ struct Index {
 
   @Builder
   SettingsContent() {
-    Column({ space: SP.L }) {
-      Text('设置')
-        .fontSize(20)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(DT.LIGHT_TEXT_PRIMARY)
-        .width('100%')
-        .margin({ top: SP.L, bottom: SP.L })
+    Scroll() {
+      Column({ space: SP.L }) {
+        // 外观设置分组
+        Column({ space: SP.M }) {
+          Text('外观')
+            .fontSize(12)
+            .fontColor(DT.LIGHT_TEXT_TERTIARY)
+            .fontWeight(FontWeight.Medium)
+            .width('100%')
+            .padding({ left: SP.S })
 
-      Column({ space: SP.M }) {
-        Row() {
-          Text('深色模式')
-            .fontSize(14)
-            .fontColor(DT.LIGHT_TEXT_PRIMARY)
-          Blank()
-          Toggle({ type: ToggleType.Switch, isOn: false })
-            .selectedColor(DT.BRAND_PRIMARY)
+          Column() {
+            this.SettingItemBuilder('🎨', '深色模式', true, false)
+            Divider().height(1).color(DT.LIGHT_BG_SECONDARY).margin({ left: 44 })
+            this.SettingItemBuilder('🔔', '消息通知', true, true)
+            Divider().height(1).color(DT.LIGHT_BG_SECONDARY).margin({ left: 44 })
+            this.SettingItemBuilder('🔄', '自动刷新', true, true)
+          }
+          .backgroundColor(DT.LIGHT_BG_PRIMARY)
+          .borderRadius(SP.RADIUS_M)
         }
         .width('100%')
-        .height(52)
-        .padding(SP.M)
-        .backgroundColor(DT.LIGHT_BG_PRIMARY)
-        .borderRadius(SP.RADIUS_M)
-        .shadow({ radius: 4, color: DT.SHADOW_LIGHT, offsetX: 0, offsetY: 1 })
 
-        Row() {
-          Text('消息通知')
-            .fontSize(14)
-            .fontColor(DT.LIGHT_TEXT_PRIMARY)
-          Blank()
-          Toggle({ type: ToggleType.Switch, isOn: true })
-            .selectedColor(DT.BRAND_PRIMARY)
+        // 数据管理分组
+        Column({ space: SP.M }) {
+          Text('数据管理')
+            .fontSize(12)
+            .fontColor(DT.LIGHT_TEXT_TERTIARY)
+            .fontWeight(FontWeight.Medium)
+            .width('100%')
+            .padding({ left: SP.S })
+
+          Column() {
+            this.SettingItemBuilder('🗑', '清除缓存', false, false, () => {
+              // TODO: 清除缓存
+            })
+            Divider().height(1).color(DT.LIGHT_BG_SECONDARY).margin({ left: 44 })
+            this.SettingItemBuilder('📤', '导出数据', false, false, () => {
+              // TODO: 导出数据
+            })
+          }
+          .backgroundColor(DT.LIGHT_BG_PRIMARY)
+          .borderRadius(SP.RADIUS_M)
         }
         .width('100%')
-        .height(52)
-        .padding(SP.M)
-        .backgroundColor(DT.LIGHT_BG_PRIMARY)
-        .borderRadius(SP.RADIUS_M)
-        .shadow({ radius: 4, color: DT.SHADOW_LIGHT, offsetX: 0, offsetY: 1 })
 
-        Row() {
-          Text('自动刷新')
-            .fontSize(14)
-            .fontColor(DT.LIGHT_TEXT_PRIMARY)
-          Blank()
-          Toggle({ type: ToggleType.Switch, isOn: true })
-            .selectedColor(DT.BRAND_PRIMARY)
+        // 关于分组
+        Column({ space: SP.M }) {
+          Text('关于')
+            .fontSize(12)
+            .fontColor(DT.LIGHT_TEXT_TERTIARY)
+            .fontWeight(FontWeight.Medium)
+            .width('100%')
+            .padding({ left: SP.S })
+
+          Column() {
+            this.SettingItemBuilder('ℹ️', '关于应用', false, false, () => {
+              // TODO: 关于页面
+            })
+            Divider().height(1).color(DT.LIGHT_BG_SECONDARY).margin({ left: 44 })
+            this.SettingItemBuilder('⭐', '给个好评', false, false, () => {
+              // TODO: 应用商店
+            })
+          }
+          .backgroundColor(DT.LIGHT_BG_PRIMARY)
+          .borderRadius(SP.RADIUS_M)
         }
         .width('100%')
-        .height(52)
-        .padding(SP.M)
-        .backgroundColor(DT.LIGHT_BG_PRIMARY)
-        .borderRadius(SP.RADIUS_M)
-        .shadow({ radius: 4, color: DT.SHADOW_LIGHT, offsetX: 0, offsetY: 1 })
 
-        Button('清除缓存')
-          .width('100%')
-          .height(44)
-          .backgroundColor(DT.WARNING)
-          .fontColor('#FFFFFF')
-          .borderRadius(SP.RADIUS_S)
-          .margin({ top: SP.L })
-
-        Button('关于应用')
-          .width('100%')
-          .height(44)
-          .backgroundColor(DT.LIGHT_BG_SECONDARY)
-          .fontColor(DT.LIGHT_TEXT_PRIMARY)
-          .borderRadius(SP.RADIUS_S)
-
-        Text('Harmony Claw v1.0.0')
-          .fontSize(12)
-          .fontColor(DT.LIGHT_TEXT_TERTIARY)
-          .margin({ top: SP.XL })
+        // 版本信息
+        Column({ space: SP.XS }) {
+          Text('Harmony Claw')
+            .fontSize(16)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(DT.LIGHT_TEXT_PRIMARY)
+          Text('Version 1.0.0')
+            .fontSize(12)
+            .fontColor(DT.LIGHT_TEXT_TERTIARY)
+        }
+        .width('100%')
+        .alignItems(HorizontalAlign.Center)
+        .margin({ top: SP.XL, bottom: SP.XL })
       }
       .width('100%')
       .padding(SP.L)
     }
     .width('100%')
     .layoutWeight(1)
+  }
+
+  // 设置项构建器
+  @Builder
+  SettingItemBuilder(icon: string, title: string, showToggle: boolean, toggleValue: boolean, onClick?: () => void) {
+    Row() {
+      Text(icon)
+        .fontSize(20)
+        .width(32)
+        .textAlign(TextAlign.Center)
+
+      Text(title)
+        .fontSize(15)
+        .fontColor(DT.LIGHT_TEXT_PRIMARY)
+        .layoutWeight(1)
+        .margin({ left: SP.S })
+
+      if (showToggle) {
+        Toggle({ type: ToggleType.Switch, isOn: toggleValue })
+          .selectedColor(DT.BRAND_PRIMARY)
+          .width(48)
+          .height(28)
+      } else {
+        Text('›')
+          .fontSize(20)
+          .fontColor(DT.LIGHT_TEXT_TERTIARY)
+      }
+    }
+    .width('100%')
+    .height(52)
+    .padding({ left: SP.M, right: SP.M })
+    .onClick(() => {
+      if (onClick) onClick()
+    })
   }
 
   // 获取动态标题栏背景色
@@ -397,18 +440,20 @@ struct Index {
 
         Blank()
 
-        Button('➕')
+        if (this.selectedTabIndex === 0) {
+          Button() {
+            SymbolGlyph($r('sys.symbol.plus'))
+              .fontSize(22)
+              .fontColor([DT.BRAND_PRIMARY])
+              .fontWeight(FontWeight.Medium)
+          }
           .width(40)
           .height(40)
           .backgroundColor('transparent')
-          .fontSize(20)
           .onClick(() => {
-            if (this.selectedTabIndex === 0) {
-              router.pushUrl({ url: 'pages/GatewayListPage' });
-            } else if (this.selectedTabIndex === 1) {
-              router.pushUrl({ url: 'pages/ProcessListPage' });
-            }
+            router.pushUrl({ url: 'pages/AddGatewayPage' });
           })
+        }
       }
       .width('100%')
       .height(Layout.headerHeight)
