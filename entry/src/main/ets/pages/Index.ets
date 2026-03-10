@@ -1,4 +1,4 @@
-import { router, curves } from '@kit.ArkUI';
+import { router, curves, ICurve } from '@kit.ArkUI';
 import { Colors, Typography } from '../styles/DesignTokens';
 import { Spacing, Layout } from '../styles/Spacing';
 import { DesignTokens as DT, Spacing as SP } from '../constants';
@@ -318,7 +318,7 @@ struct Index {
 
   // Tab 切换动画配置 - 使用 SpringMotion 实现弹簧效果
   private tabAnimationDuration: number = 400
-  private tabAnimationCurve: Curve = curves.springCurve(100, 1, 180, 16)
+  private tabAnimationCurve: ICurve = curves.springCurve(100, 1, 180, 16)
 
   // Tab Bar 样式
   @Builder
