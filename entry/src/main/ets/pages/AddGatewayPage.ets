@@ -166,7 +166,7 @@ struct AddGatewayPage {
               HmInput({
                 inputLabel: '网关名称',
                 inputPlaceholder: '自定义名称（可选）',
-                inputValue: $gatewayName,
+                onInputChange: (value: string): void => { this.gatewayName = value },
                 inputMaxLength: 50
               })
 
@@ -174,7 +174,7 @@ struct AddGatewayPage {
               HmInput({
                 inputLabel: 'IP 地址 *',
                 inputPlaceholder: '例如：192.168.1.100',
-                inputValue: $gatewayIp,
+                onInputChange: (value: string): void => { this.gatewayIp = value },
                 inputMaxLength: 15
               })
 
@@ -182,7 +182,7 @@ struct AddGatewayPage {
               HmInput({
                 inputLabel: '端口 *',
                 inputPlaceholder: '默认 8333',
-                inputValue: $gatewayPort,
+                onInputChange: (value: string): void => { this.gatewayPort = value },
                 inputMaxLength: 5
               })
 
