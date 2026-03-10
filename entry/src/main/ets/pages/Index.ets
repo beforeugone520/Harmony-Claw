@@ -382,7 +382,7 @@ struct Index {
       .barHeight(Layout.tabBarHeight)
       .barBackgroundColor('rgba(255,255,255,0.85)')
       .barBackgroundBlurStyle(BlurStyle.Thin)
-      .padding({ top: Layout.headerHeight, bottom: Layout.tabBarHeight })
+      .padding({ top: Layout.headerHeight })
       .backgroundColor(DT.LIGHT_BG_SECONDARY)
       .onChange((index: number) => {
         this.selectedTabIndex = index
