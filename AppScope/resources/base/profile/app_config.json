@@ -1,0 +1,6 @@
+{
+  "app": {
+    "bundleName": "com.openclaw.gateway",
+    "vendor": "openclaw"
+  }
+}

@@ -1,0 +1,27 @@
+# Define project specific obfuscation rules here.
+# You can include the obfuscation configuration files in the current module's build-profile.json5.
+
+# For more details, see
+# https://developer.huawei.com/consumer/cn/doc/harmonyos-guides-V5/source-obfuscation-V5
+
+# Keep all ArkUI components and their properties
+-keep-global-name
+-class * <@Component struct * { *; }>
+-class * <@Entry struct * { *; }>
+-class * <@Preview struct * { *; }>
+
+# Keep all exported classes
+-keep-global-name
+-class * <export class *>
+-class * <export interface *>
+-class * <export enum *>
+
+# Keep all @ObservedV2 and @Trace decorators
+-keep-property-decorator
+@ObservedV2
+@Trace
+@ObjectLink
+@Prop
+@State
+@Provide
+@Consume

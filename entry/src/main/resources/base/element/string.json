@@ -1,0 +1,92 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "Entry module for Harmony Claw"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Main entry ability"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Harmony Claw"
+    },
+    {
+      "name": "internet_permission_reason",
+      "value": "Required to connect to OpenClaw Gateway API"
+    },
+    {
+      "name": "page_title_dashboard",
+      "value": "Dashboard"
+    },
+    {
+      "name": "page_title_gateways",
+      "value": "Gateways"
+    },
+    {
+      "name": "page_title_sessions",
+      "value": "Sessions"
+    },
+    {
+      "name": "page_title_messages",
+      "value": "Messages"
+    },
+    {
+      "name": "page_title_processes",
+      "value": "Processes"
+    },
+    {
+      "name": "page_title_settings",
+      "value": "Settings"
+    },
+    {
+      "name": "button_refresh",
+      "value": "Refresh"
+    },
+    {
+      "name": "button_add",
+      "value": "Add"
+    },
+    {
+      "name": "button_edit",
+      "value": "Edit"
+    },
+    {
+      "name": "button_delete",
+      "value": "Delete"
+    },
+    {
+      "name": "button_save",
+      "value": "Save"
+    },
+    {
+      "name": "button_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "status_online",
+      "value": "Online"
+    },
+    {
+      "name": "status_offline",
+      "value": "Offline"
+    },
+    {
+      "name": "status_error",
+      "value": "Error"
+    },
+    {
+      "name": "status_loading",
+      "value": "Loading..."
+    },
+    {
+      "name": "empty_data",
+      "value": "No data available"
+    },
+    {
+      "name": "network_error",
+      "value": "Network connection failed"
+    }
+  ]
+}

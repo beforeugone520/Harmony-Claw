@@ -1,0 +1,12 @@
+{
+  "modelVersion": "6.0.2",
+  "name": "harmony-claw",
+  "version": "1.0.0",
+  "description": "OpenClaw Gateway Manager for HarmonyOS",
+  "main": "",
+  "author": "OpenClaw Team",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {},
+  "dynamicDependencies": {}
+}
