@@ -14,15 +14,11 @@ export struct HmInput {
   @Prop inputDisabled: boolean = false
   @Prop inputError: string = ''
 
-  // 双向绑定
-  @State inputValue: string = ''
+  // 使用 @Link 实现双向绑定
+  @Link inputValue: string
 
   // 事件
   onInputChange?: (value: string) => void
-
-  aboutToAppear() {
-    // 初始化
-  }
 
   private getBorderColor(): ResourceColor {
     if (this.inputError) return DT.ERROR
@@ -47,7 +43,7 @@ export struct HmInput {
 
       // 输入框容器
       Row() {
-        // 输入框
+        // 输入框 - 使用 $$ 双向绑定
         TextInput({ placeholder: this.inputPlaceholder, text: $$this.inputValue })
           .placeholderColor(DT.LIGHT_TEXT_TERTIARY)
           .fontSize(TYP.SIZE_BODY)
