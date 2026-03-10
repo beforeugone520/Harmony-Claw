@@ -4,7 +4,7 @@ OpenClaw Gateway Manager for HarmonyOS - 一个用于管理网关、会话、消
 
 ## 项目概述
 
-Harmony Claw 是一个基于 HarmonyOS API 12 开发的企业级网关管理应用，提供了对 OpenClaw 网关系统的完整管理能力。
+Harmony Claw 是一个基于 HarmonyOS API 22 (6.0.2) 开发的企业级网关管理应用，提供了对 OpenClaw 网关系统的完整管理能力。
 
 ## 当前进度
 
