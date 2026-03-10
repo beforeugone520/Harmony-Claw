@@ -1,12 +1,11 @@
 import { Gateway, GatewayStatus } from '../models/Gateway';
-import { getStorageService, StorageKeys } from '../services/StorageService';
-import { getHttpService } from '../services/HttpService';
+import { getStorageService } from '../services/StorageService';
+import { getOpenClawAPIService } from '../services/OpenClawAPIService';
 import { getGatewayDiscoveryService, StatusCheckResult } from '../services/GatewayDiscoveryService';
-import { ApiEndpoints } from '../constants/ApiEndpoints';
 
 export class GatewayRepository {
   private storage = getStorageService();
-  private http = getHttpService();
+  private api = getOpenClawAPIService();
   private discovery = getGatewayDiscoveryService();
 
   async getAll(): Promise<Gateway[]> {
@@ -90,10 +89,21 @@ export class GatewayRepository {
   async connect(gateway: Gateway): Promise<boolean> {
     const isValid = await this.validateConnection(gateway);
     if (isValid) {
-      this.http.setBaseUrl(`http://${gateway.host}:${gateway.port}`);
+      // Set base URL for all subsequent API calls
+      const http = this.api['http']; // Access private http service
+      if (http) {
+        http.setBaseUrl(`http://${gateway.host}:${gateway.port}`);
+      }
       await this.setCurrent(gateway.id);
     }
     return isValid;
+  }
+
+  setBaseUrl(url: string): void {
+    const http = this.api['http'];
+    if (http) {
+      http.setBaseUrl(url);
+    }
   }
 }
 
