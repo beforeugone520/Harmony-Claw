@@ -2,7 +2,11 @@
   "src": [
     "pages/Index",
     "pages/GatewayListPage",
+    "pages/AddGatewayPage",
+    "pages/GatewayDetailPage",
+    "pages/SessionListPage",
     "pages/ChatPage",
-    "pages/ProcessListPage"
+    "pages/ProcessListPage",
+    "pages/SettingsPage"
   ]
 }

@@ -202,7 +202,7 @@ struct GatewayListPage {
             .fontColor(Colors.textInverse)
             .fontSize(24)
             .onClick(() => {
-              this.showAddDialog = true;
+              router.pushUrl({ url: 'pages/AddGatewayPage' })
             })
         }
         .width('100%')
