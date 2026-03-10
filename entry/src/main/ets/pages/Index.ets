@@ -342,22 +342,6 @@ struct Index {
 
   build() {
     Stack({ alignContent: Alignment.TopStart }) {
-      // Content
-      Column() {
-        if (this.selectedTabIndex === 0) {
-          this.DashboardContent()
-        } else if (this.selectedTabIndex === 1) {
-          this.GatewaysContent()
-        } else if (this.selectedTabIndex === 2) {
-          this.ProcessesContent()
-        } else {
-          this.SettingsContent()
-        }
-      }
-      .width('100%')
-      .height('100%')
-      .padding({ top: Layout.headerHeight }) // 为标题栏留出空间
-
       // Header with dynamic blur effect
       Row() {
         Text('Harmony Claw')
@@ -401,6 +385,7 @@ struct Index {
       }
       .layoutWeight(1)
       .width('100%')
+      .padding({ top: Layout.headerHeight })
 
       // Bottom Tab Bar with blur effect
       Row() {
