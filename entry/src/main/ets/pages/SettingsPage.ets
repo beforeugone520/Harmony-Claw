@@ -382,3 +382,4 @@ struct SettingsPage {
     .height('100%')
     .backgroundColor(Colors.backgroundPrimary)
   }
+}

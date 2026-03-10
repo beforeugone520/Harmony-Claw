@@ -4,7 +4,7 @@
  */
 import { ProcessViewModel } from '../viewmodels/ProcessViewModel'
 import { ProcessCard } from '../components/process/ProcessCard'
-import { Process, ProcessStatus } from '../models/Process'
+import { Process } from '../models/Process'
 import { DesignTokens as DT, Spacing as SP, Typography as TYP } from '../constants'
 import { HmButton, HmInfoCard, HmConfirmDialog, ToastManager } from '../components/common'
 import { LoadingState } from '../components/LoadingState'
@@ -22,7 +22,6 @@ struct ProcessListPage {
 
   aboutToAppear() {
     this.viewModel.initialize()
-    // 启动自动刷新（每 10 秒）
     this.startAutoRefresh()
   }
 
@@ -30,7 +29,6 @@ struct ProcessListPage {
     this.stopAutoRefresh()
   }
 
-  // 启动自动刷新
   private startAutoRefresh() {
     this.autoRefresh = true
     this.refreshTimer = setInterval(() => {
@@ -40,7 +38,6 @@ struct ProcessListPage {
     }, 10000)
   }
 
-  // 停止自动刷新
   private stopAutoRefresh() {
     this.autoRefresh = false
     if (this.refreshTimer !== -1) {
@@ -49,7 +46,6 @@ struct ProcessListPage {
     }
   }
 
-  // 手动刷新
   private async handleRefresh() {
     this.isRefreshing = true
     await this.viewModel.refresh()
@@ -57,7 +53,6 @@ struct ProcessListPage {
     ToastManager.success('已刷新')
   }
 
-  // 终止进程
   private async handleTerminateProcess() {
     if (!this.processToTerminate) return
 
@@ -73,7 +68,6 @@ struct ProcessListPage {
     }
   }
 
-  // 切换自动刷新
   private toggleAutoRefresh() {
     this.autoRefresh = !this.autoRefresh
     if (this.autoRefresh) {
@@ -90,35 +84,32 @@ struct ProcessListPage {
       Column({ space: SP.CARD_GAP }) {
         // 统计卡片区域
         Row({ space: SP.CARD_GAP }) {
-          // 运行中进程数
           HmInfoCard({
-            title: '运行中',
-            value: String(this.viewModel.getRunningCount()),
-            icon: $r('app.media.ic_process'),
-            iconBgColor: DT.SUCCESS_BG,
-            iconColor: DT.SUCCESS
+            infoTitle: '运行中',
+            infoValue: String(this.viewModel.getRunningCount()),
+            infoIcon: '⚙️',
+            infoIconBg: DT.SUCCESS_BG,
+            infoIconColor: DT.SUCCESS
           })
           .layoutWeight(1)
 
-          // CPU 占用
           HmInfoCard({
-            title: 'CPU',
-            value: `${this.viewModel.getTotalCpuUsage().toFixed(1)}`,
-            unit: '%',
-            icon: $r('app.media.ic_cpu'),
-            iconBgColor: DT.BRAND_LIGHT,
-            iconColor: DT.BRAND_PRIMARY
+            infoTitle: 'CPU',
+            infoValue: `${this.viewModel.getTotalCpuUsage().toFixed(1)}`,
+            infoUnit: '%',
+            infoIcon: '💻',
+            infoIconBg: DT.BRAND_LIGHT,
+            infoIconColor: DT.BRAND_PRIMARY
           })
           .layoutWeight(1)
 
-          // 内存占用
           HmInfoCard({
-            title: '内存',
-            value: `${this.viewModel.getTotalMemoryUsage().toFixed(0)}`,
-            unit: 'MB',
-            icon: $r('app.media.ic_memory'),
-            iconBgColor: DT.WARNING_BG,
-            iconColor: DT.WARNING
+            infoTitle: '内存',
+            infoValue: `${this.viewModel.getTotalMemoryUsage().toFixed(0)}`,
+            infoUnit: 'MB',
+            infoIcon: '💾',
+            infoIconBg: DT.WARNING_BG,
+            infoIconColor: DT.WARNING
           })
           .layoutWeight(1)
         }
@@ -131,7 +122,6 @@ struct ProcessListPage {
 
         // 工具栏
         Row({ space: SP.M }) {
-          // 自动刷新开关
           Row({ space: SP.S }) {
             Toggle({ type: ToggleType.Switch, isOn: $$this.autoRefresh })
               .selectedColor(DT.BRAND_PRIMARY)
@@ -145,15 +135,12 @@ struct ProcessListPage {
 
           Blank()
 
-          // 手动刷新按钮
           HmButton({
-            text: '刷新',
-            type: 1, // SECONDARY
-            size: 0, // SMALL
-            width: 80,
-            disabled: this.viewModel.isLoading,
-            loading: this.viewModel.isLoading,
-            onClick: () => this.handleRefresh()
+            btnText: '刷新',
+            btnType: 1,
+            btnWidth: 80,
+            btnDisabled: this.viewModel.isLoading,
+            onBtnClick: () => this.handleRefresh()
           })
         }
         .width('100%')
@@ -207,15 +194,14 @@ struct ProcessListPage {
     .titleMode(NavigationTitleMode.Mini)
     .mode(NavigationMode.Stack)
     .backgroundColor(DT.LIGHT_BG_SECONDARY)
-    // 终止确认对话框
     .overlay(
       HmConfirmDialog({
-        visible: this.showTerminateDialog,
-        title: '终止进程',
-        message: `确定要终止进程"${this.processToTerminate?.name || '未知'}"吗？`,
-        confirmText: '终止',
-        cancelText: '取消',
-        danger: true,
+        confirmVisible: this.showTerminateDialog,
+        confirmTitle: '终止进程',
+        confirmMessage: `确定要终止进程"${this.processToTerminate?.name || '未知'}"吗？`,
+        confirmBtnText: '终止',
+        cancelBtnText: '取消',
+        isDanger: true,
         onConfirm: () => {
           this.showTerminateDialog = false
           this.handleTerminateProcess()
@@ -228,14 +214,11 @@ struct ProcessListPage {
     )
   }
 
-  // 终止按钮构建器
   @Builder
   TerminateButton(process: Process) {
     Column() {
-      Image($r('app.media.ic_stop'))
-        .width(24)
-        .height(24)
-        .fillColor(Color.White)
+      Text('⏹')
+        .fontSize(20)
     }
     .width(64)
     .height(80)

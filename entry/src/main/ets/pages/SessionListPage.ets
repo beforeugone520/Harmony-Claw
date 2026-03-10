@@ -7,7 +7,7 @@ import { Session, SessionStatus } from '../models/Session'
 import { ChatViewModel } from '../viewmodels/ChatViewModel'
 import { SessionItem } from '../components/chat/SessionItem'
 import { DesignTokens as DT, Spacing as SP, Typography as TYP } from '../constants'
-import { HmButton, HmCard, HmConfirmDialog, HmSearchInput, ToastManager } from '../components/common'
+import { HmConfirmDialog, HmSearchInput, ToastManager } from '../components/common'
 import { LoadingState } from '../components/LoadingState'
 import { EmptyState } from '../components/EmptyState'
 
@@ -45,7 +45,6 @@ struct SessionListPage {
 
     if (session) {
       ToastManager.success('会话创建成功')
-      // 跳转到聊天页面
       router.pushUrl({
         url: 'pages/ChatPage',
         params: { sessionId: session.id }
@@ -94,8 +93,9 @@ struct SessionListPage {
         // 搜索栏
         Row() {
           HmSearchInput({
-            placeholder: '搜索会话',
-            value: $$this.searchQuery
+            searchPlaceholder: '搜索会话',
+            searchValue: this.searchQuery,
+            onSearchChange: (value: string) => { this.searchQuery = value }
           })
         }
         .width('100%')
@@ -184,19 +184,18 @@ struct SessionListPage {
     .toolbarConfiguration([
       {
         value: '新建',
-        icon: $r('app.media.ic_add'),
+        icon: $r('app.media.startIcon'),
         action: () => this.createNewSession()
       }
     ])
-    // 删除确认对话框
     .overlay(
       HmConfirmDialog({
-        visible: this.showDeleteDialog,
-        title: '删除会话',
-        message: `确定要删除"${this.sessionToDelete?.title || '未命名会话'}"吗？此操作不可撤销。`,
-        confirmText: '删除',
-        cancelText: '取消',
-        danger: true,
+        confirmVisible: this.showDeleteDialog,
+        confirmTitle: '删除会话',
+        confirmMessage: `确定要删除"${this.sessionToDelete?.title || '未命名会话'}"吗？`,
+        confirmBtnText: '删除',
+        cancelBtnText: '取消',
+        isDanger: true,
         onConfirm: () => {
           this.showDeleteDialog = false
           this.deleteSession()
@@ -209,14 +208,11 @@ struct SessionListPage {
     )
   }
 
-  // 删除按钮构建器
   @Builder
   DeleteButton(session: Session) {
     Column() {
-      Image($r('app.media.ic_delete'))
-        .width(24)
-        .height(24)
-        .fillColor(Color.White)
+      Text('🗑')
+        .fontSize(20)
     }
     .width(64)
     .height(72)

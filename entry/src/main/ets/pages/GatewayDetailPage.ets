@@ -2,6 +2,7 @@ import { router } from '@kit.ArkUI';
 import { Colors } from '../styles/DesignTokens';
 import { Spacing, Layout } from '../styles/Spacing';
 
+@Entry
 @Component
 struct GatewayDetailPage {
   @State gatewayName: string = 'Gateway Name';
