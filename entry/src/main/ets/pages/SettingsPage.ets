@@ -1,389 +1,311 @@
 import { router } from '@kit.ArkUI';
-import { Spacing as SP } from '../constants';
+import { DesignTokens as DT, Spacing as SP, Typography as TYP, Animation as ANI } from '../constants';
 import { ThemeManager, ThemeMode } from '../manager/ThemeManager';
 
 @Entry
 @Component
 struct SettingsPage {
-  @State private darkMode: boolean = false;
+  @State private isDark: boolean = false;
   @State private notifications: boolean = true;
   @State private autoRefresh: boolean = true;
   @State private apiUrl: string = 'https://api.openclaw.io';
   @State private refreshInterval: number = 30;
 
+  // Safe area for immersive mode
+  @State topSafeArea: number = 37
+
   aboutToAppear() {
-    // 初始化深色模式开关状态
+    // 初始化深色模式状态
     const themeManager = ThemeManager.getInstance();
-    this.darkMode = themeManager.getCurrentMode() === ThemeMode.DARK;
+    this.isDark = themeManager.getCurrentMode() === ThemeMode.DARK;
   }
 
   private async onDarkModeChange(value: boolean): Promise<void> {
-    this.darkMode = value;
+    this.isDark = value;
     const themeManager = ThemeManager.getInstance();
     await themeManager.setThemeMode(value ? ThemeMode.DARK : ThemeMode.LIGHT);
   }
 
   @Builder
-  AppInfoSection() {
-    Column({ space: SP.M }) {
-      Row({ space: SP.M }) {
-        Column()
-          .width(64)
-          .height(64)
-          .backgroundColor($r('app.color.brand_primary'))
-          .borderRadius(16)
-
-        Column({ space: SP.XS }) {
-          Text('Harmony Claw')
-            .fontSize(18)
-            .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.text_primary'))
-
-          Text('Version 1.0.0')
-            .fontSize(12)
-            .fontColor($r('app.color.text_secondary'))
-
-          Text('Build 20240309')
-            .fontSize(10)
-            .fontColor($r('app.color.text_tertiary'))
-        }
-        .alignItems(HorizontalAlign.Start)
-      }
+  SectionTitle(title: string) {
+    Text(title)
+      .fontSize(TYP.SIZE_H3)
+      .fontWeight(TYP.WEIGHT_MEDIUM)
+      .fontColor(DT.getTextPrimary(this.isDark))
       .width('100%')
-    }
+      .textAlign(TextAlign.Start)
   }
 
   @Builder
   AppearanceSection() {
-    Row() {
-      Column({ space: SP.XS }) {
-        Text('Dark Mode')
-          .fontSize(14)
-          .fontColor($r('app.color.text_primary'))
+    Column({ space: SP.M }) {
+      this.SectionTitle('外观')
+      Column({ space: SP.M }) {
+        Row() {
+          Column({ space: SP.XS }) {
+            Text('深色模式')
+              .fontSize(TYP.SIZE_BODY)
+              .fontColor(DT.getTextPrimary(this.isDark))
 
-        Text('Use dark theme throughout the app')
-          .fontSize(12)
-          .fontColor($r('app.color.text_tertiary'))
+            Text('使用深色主题')
+              .fontSize(TYP.SIZE_SMALL)
+              .fontColor(DT.getTextSecondary(this.isDark))
+          }
+          .alignItems(HorizontalAlign.Start)
+          .layoutWeight(1)
+
+          Toggle({ type: ToggleType.Switch, isOn: this.isDark })
+            .selectedColor(DT.BRAND_PRIMARY)
+            .onChange((value: boolean) => this.onDarkModeChange(value))
+        }
+        .width('100%')
+        .height(64)
       }
-      .alignItems(HorizontalAlign.Start)
-      .layoutWeight(1)
-
-      Toggle({ type: ToggleType.Switch, isOn: this.darkMode })
-        .selectedColor($r('app.color.brand_primary'))
-        .onChange((value: boolean) => this.onDarkModeChange(value))
+      .width('100%')
+      .padding(SP.L)
+      .backgroundColor(DT.getSurfaceColor(this.isDark))
+      .borderRadius(SP.RADIUS_L)
     }
     .width('100%')
-    .height(64)
   }
 
   @Builder
   NotificationsSection() {
-    Row() {
-      Column({ space: SP.XS }) {
-        Text('Push Notifications')
-          .fontSize(14)
-          .fontColor($r('app.color.text_primary'))
+    Column({ space: SP.M }) {
+      this.SectionTitle('通知')
+      Column({ space: SP.M }) {
+        Row() {
+          Column({ space: SP.XS }) {
+            Text('推送通知')
+              .fontSize(TYP.SIZE_BODY)
+              .fontColor(DT.getTextPrimary(this.isDark))
 
-        Text('Receive alerts about gateway status changes')
-          .fontSize(12)
-          .fontColor($r('app.color.text_tertiary'))
+            Text('接收网关状态变更提醒')
+              .fontSize(TYP.SIZE_SMALL)
+              .fontColor(DT.getTextSecondary(this.isDark))
+          }
+          .alignItems(HorizontalAlign.Start)
+          .layoutWeight(1)
+
+          Toggle({ type: ToggleType.Switch, isOn: this.notifications })
+            .selectedColor(DT.BRAND_PRIMARY)
+            .onChange((value: boolean) => this.notifications = value)
+        }
+        .width('100%')
+        .height(64)
       }
-      .alignItems(HorizontalAlign.Start)
-      .layoutWeight(1)
-
-      Toggle({ type: ToggleType.Switch, isOn: this.notifications })
-        .selectedColor($r('app.color.brand_primary'))
-        .onChange((value: boolean) => this.notifications = value)
+      .width('100%')
+      .padding(SP.L)
+      .backgroundColor(DT.getSurfaceColor(this.isDark))
+      .borderRadius(SP.RADIUS_L)
     }
     .width('100%')
-    .height(64)
   }
 
   @Builder
   DataSection() {
     Column({ space: SP.M }) {
-      Row() {
-        Column({ space: SP.XS }) {
-          Text('Auto Refresh')
-            .fontSize(14)
-            .fontColor($r('app.color.text_primary'))
+      this.SectionTitle('数据')
+      Column({ space: SP.M }) {
+        Row() {
+          Column({ space: SP.XS }) {
+            Text('自动刷新')
+              .fontSize(TYP.SIZE_BODY)
+              .fontColor(DT.getTextPrimary(this.isDark))
 
-          Text('Automatically refresh data')
-            .fontSize(12)
-            .fontColor($r('app.color.text_tertiary'))
+            Text('自动刷新数据')
+              .fontSize(TYP.SIZE_SMALL)
+              .fontColor(DT.getTextSecondary(this.isDark))
+          }
+          .alignItems(HorizontalAlign.Start)
+          .layoutWeight(1)
+
+          Toggle({ type: ToggleType.Switch, isOn: this.autoRefresh })
+            .selectedColor(DT.BRAND_PRIMARY)
+            .onChange((value: boolean) => this.autoRefresh = value)
         }
-        .alignItems(HorizontalAlign.Start)
-        .layoutWeight(1)
+        .width('100%')
+        .height(64)
 
-        Toggle({ type: ToggleType.Switch, isOn: this.autoRefresh })
-          .selectedColor($r('app.color.brand_primary'))
-          .onChange((value: boolean) => this.autoRefresh = value)
+        Divider()
+          .color(DT.getBorderColor(this.isDark))
+          .margin({ top: SP.M, bottom: SP.M })
+
+        Column({ space: SP.S }) {
+          Text('API 地址')
+            .fontSize(TYP.SIZE_BODY)
+            .fontColor(DT.getTextPrimary(this.isDark))
+            .width('100%')
+
+          TextInput({ placeholder: '输入 API 地址', text: this.apiUrl })
+            .width('100%')
+            .height(44)
+            .placeholderColor(DT.getTextSecondary(this.isDark))
+            .fontSize(TYP.SIZE_BODY)
+            .backgroundColor(DT.LIGHT_BG_PRIMARY)
+            .fontColor(DT.getTextPrimary(this.isDark))
+            .borderRadius(SP.RADIUS_M)
+            .onChange((value: string) => this.apiUrl = value)
+        }
+        .width('100%')
+        .margin({ top: SP.S, bottom: SP.S })
       }
       .width('100%')
-      .height(64)
-
-      Divider()
-        .color($r('app.color.border_light'))
-        .margin({ top: SP.M, bottom: SP.M })
-
-      Column({ space: SP.S }) {
-        Text('API Base URL')
-          .fontSize(14)
-          .fontColor($r('app.color.text_primary'))
-          .width('100%')
-
-        TextInput({ placeholder: 'Enter API URL', text: this.apiUrl })
-          .width('100%')
-          .height(44)
-          .placeholderColor($r('app.color.text_tertiary'))
-          .fontSize(14)
-          .backgroundColor($r('app.color.background_tertiary'))
-          .borderRadius(8)
-          .onChange((value: string) => this.apiUrl = value)
-      }
-      .width('100%')
-      .margin({ top: SP.S, bottom: SP.S })
+      .padding(SP.L)
+      .backgroundColor(DT.getSurfaceColor(this.isDark))
+      .borderRadius(SP.RADIUS_L)
     }
+    .width('100%')
   }
 
   @Builder
   ActionsSection() {
     Column({ space: SP.M }) {
-      Button('Clear Cache')
-        .width('100%')
-        .height(44)
-        .backgroundColor($r('app.color.warning'))
-        .fontColor($r('app.color.text_inverse'))
-        .fontSize(14)
-        .fontWeight(FontWeight.Medium)
-        .borderRadius(8)
-        .onClick(() => {
-          // Clear cache action
-        })
+      this.SectionTitle('操作')
+      Column({ space: SP.M }) {
+        Button('清除缓存')
+          .width('100%')
+          .height(44)
+          .backgroundColor(DT.WARNING)
+          .fontColor('#FFFFFF')
+          .fontSize(TYP.SIZE_BODY)
+          .fontWeight(TYP.WEIGHT_MEDIUM)
+          .borderRadius(SP.RADIUS_M)
+          .onClick(() => {
+            // Clear cache action
+          })
 
-      Button('Reset to Defaults')
-        .width('100%')
-        .height(44)
-        .backgroundColor($r('app.color.text_tertiary'))
-        .fontColor($r('app.color.text_inverse'))
-        .fontSize(14)
-        .fontWeight(FontWeight.Medium)
-        .borderRadius(8)
-        .onClick(() => {
-          this.darkMode = false;
-          this.notifications = true;
-          this.autoRefresh = true;
-          this.apiUrl = 'https://api.openclaw.io';
-          ThemeManager.getInstance().setThemeMode(ThemeMode.LIGHT);
-        })
+        Button('恢复默认设置')
+          .width('100%')
+          .height(44)
+          .backgroundColor(DT.getTextSecondary(this.isDark))
+          .fontColor('#FFFFFF')
+          .fontSize(TYP.SIZE_BODY)
+          .fontWeight(TYP.WEIGHT_MEDIUM)
+          .borderRadius(SP.RADIUS_M)
+          .onClick(() => {
+            this.isDark = false;
+            this.notifications = true;
+            this.autoRefresh = true;
+            this.apiUrl = 'https://api.openclaw.io';
+            ThemeManager.getInstance().setThemeMode(ThemeMode.LIGHT);
+          })
 
-      Button('Sign Out')
-        .width('100%')
-        .height(44)
-        .backgroundColor($r('app.color.error'))
-        .fontColor($r('app.color.text_inverse'))
-        .fontSize(14)
-        .fontWeight(FontWeight.Medium)
-        .borderRadius(8)
-        .onClick(() => {
-          // Sign out action
-        })
+        Button('退出登录')
+          .width('100%')
+          .height(44)
+          .backgroundColor(DT.ERROR)
+          .fontColor('#FFFFFF')
+          .fontSize(TYP.SIZE_BODY)
+          .fontWeight(TYP.WEIGHT_MEDIUM)
+          .borderRadius(SP.RADIUS_M)
+          .onClick(() => {
+            // Sign out action
+          })
+      }
+      .width('100%')
+      .padding(SP.L)
+      .backgroundColor(DT.getSurfaceColor(this.isDark))
+      .borderRadius(SP.RADIUS_L)
     }
+    .width('100%')
   }
 
   @Builder
   AboutSection() {
     Column({ space: SP.M }) {
-      Row() {
-        Text('Privacy Policy')
-          .fontSize(14)
-          .fontColor($r('app.color.text_primary'))
+      this.SectionTitle('关于')
+      Column({ space: SP.M }) {
+        // 关于应用入口行
+        Row() {
+          Column({ space: SP.XS }) {
+            Text('关于应用')
+              .fontSize(TYP.SIZE_BODY)
+              .fontColor(DT.getTextPrimary(this.isDark))
 
-        Blank()
+            Text('Harmony Claw v1.0.0')
+              .fontSize(TYP.SIZE_SMALL)
+              .fontColor(DT.getTextSecondary(this.isDark))
+          }
+          .alignItems(HorizontalAlign.Start)
+          .layoutWeight(1)
 
-        Image($r('app.media.startIcon'))
-          .width(16)
-          .height(16)
-          .fillColor($r('app.color.text_tertiary'))
+          Text('›')
+            .fontSize(20)
+            .fontColor(DT.getTextSecondary(this.isDark))
+        }
+        .width('100%')
+        .height(64)
+        .scale({ x: 1, y: 1 })
+        .animation(ANI.pressFeedbackFine())
+        .onClick(() => {
+          router.pushUrl({ url: 'pages/AboutPage' }).catch((err: Error) => {
+            console.error(`[SettingsPage] Failed to navigate: ${JSON.stringify(err)}`);
+          });
+        })
       }
       .width('100%')
-      .height(48)
-
-      Divider()
-        .color($r('app.color.border_light'))
-
-      Row() {
-        Text('Terms of Service')
-          .fontSize(14)
-          .fontColor($r('app.color.text_primary'))
-
-        Blank()
-
-        Image($r('app.media.startIcon'))
-          .width(16)
-          .height(16)
-          .fillColor($r('app.color.text_tertiary'))
-      }
-      .width('100%')
-      .height(48)
-
-      Divider()
-        .color($r('app.color.border_light'))
-
-      Row() {
-        Text('Open Source Licenses')
-          .fontSize(14)
-          .fontColor($r('app.color.text_primary'))
-
-        Blank()
-
-        Image($r('app.media.startIcon'))
-          .width(16)
-          .height(16)
-          .fillColor($r('app.color.text_tertiary'))
-      }
-      .width('100%')
-      .height(48)
+      .padding(SP.L)
+      .backgroundColor(DT.getSurfaceColor(this.isDark))
+      .borderRadius(SP.RADIUS_L)
     }
+    .width('100%')
   }
 
   build() {
     Column({ space: 0 }) {
-      // Header
+      // 顶部安全区域占位
+      Column()
+        .width('100%')
+        .height(this.topSafeArea)
+        .backgroundColor(DT.getBackgroundColor(this.isDark))
+
+      // Header - 统一风格
       Row() {
-        Button({ type: ButtonType.Circle }) {
-          Image($r('app.media.startIcon'))
-            .width(20)
-            .height(20)
-            .fillColor($r('app.color.text_primary'))
+        Button() {
+          Text('‹')
+            .fontSize(28)
+            .fontWeight(TYP.WEIGHT_MEDIUM)
+            .fontColor(DT.getTextPrimary(this.isDark))
         }
-        .width(36)
-        .height(36)
-        .backgroundColor($r('app.color.background_tertiary'))
+        .width(44)
+        .height(44)
+        .backgroundColor('transparent')
+        .scale({ x: 1, y: 1 })
+        .animation(ANI.pressFeedbackFine())
         .onClick(() => {
           router.back();
         })
 
-        Text('Settings')
-          .fontSize(18)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
-          .layoutWeight(1)
-          .textAlign(TextAlign.Center)
+        Text('设置')
+          .fontSize(TYP.SIZE_H2)
+          .fontWeight(TYP.WEIGHT_MEDIUM)
+          .fontColor(DT.getTextPrimary(this.isDark))
 
         Blank()
-          .width(36)
+          .width(44)
       }
       .width('100%')
       .height(56)
-      .padding({ left: SP.L, right: SP.L })
-      .backgroundColor($r('app.color.surface_card'))
+      .padding({ left: SP.S, right: SP.M })
+      .backgroundColor(DT.getBackgroundColor(this.isDark))
 
       Scroll() {
         Column({ space: SP.L }) {
-          // App Info
-          Column({ space: SP.M }) {
-            Text('Application')
-              .fontSize(16)
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_primary'))
-              .width('100%')
-              .textAlign(TextAlign.Start)
+          // 外观设置
+          this.AppearanceSection()
 
-            this.AppInfoSection()
-          }
-          .width('100%')
-          .padding(SP.L)
-          .backgroundColor($r('app.color.surface_card'))
-          .borderRadius(12)
+          // 通知设置
+          this.NotificationsSection()
 
-          // Appearance
-          Column({ space: SP.M }) {
-            Text('Appearance')
-              .fontSize(16)
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_primary'))
-              .width('100%')
-              .textAlign(TextAlign.Start)
+          // 数据设置
+          this.DataSection()
 
-            this.AppearanceSection()
-          }
-          .width('100%')
-          .padding(SP.L)
-          .backgroundColor($r('app.color.surface_card'))
-          .borderRadius(12)
+          // 操作
+          this.ActionsSection()
 
-          // Notifications
-          Column({ space: SP.M }) {
-            Text('Notifications')
-              .fontSize(16)
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_primary'))
-              .width('100%')
-              .textAlign(TextAlign.Start)
-
-            this.NotificationsSection()
-          }
-          .width('100%')
-          .padding(SP.L)
-          .backgroundColor($r('app.color.surface_card'))
-          .borderRadius(12)
-
-          // Data
-          Column({ space: SP.M }) {
-            Text('Data')
-              .fontSize(16)
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_primary'))
-              .width('100%')
-              .textAlign(TextAlign.Start)
-
-            this.DataSection()
-          }
-          .width('100%')
-          .padding(SP.L)
-          .backgroundColor($r('app.color.surface_card'))
-          .borderRadius(12)
-
-          // Actions
-          Column({ space: SP.M }) {
-            Text('Actions')
-              .fontSize(16)
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_primary'))
-              .width('100%')
-              .textAlign(TextAlign.Start)
-
-            this.ActionsSection()
-          }
-          .width('100%')
-          .padding(SP.L)
-          .backgroundColor($r('app.color.surface_card'))
-          .borderRadius(12)
-
-          // About
-          Column({ space: SP.M }) {
-            Text('About')
-              .fontSize(16)
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_primary'))
-              .width('100%')
-              .textAlign(TextAlign.Start)
-
-            this.AboutSection()
-          }
-          .width('100%')
-          .padding(SP.L)
-          .backgroundColor($r('app.color.surface_card'))
-          .borderRadius(12)
-
-          // Copyright
-          Text('© 2024 OpenClaw. All rights reserved.')
-            .fontSize(12)
-            .fontColor($r('app.color.text_tertiary'))
-            .width('100%')
-            .textAlign(TextAlign.Center)
-            .margin({ top: SP.XL, bottom: SP.XL })
+          // 关于
+          this.AboutSection()
         }
         .width('100%')
         .padding(SP.L)
@@ -393,6 +315,13 @@ struct SettingsPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.background_primary'))
+    .backgroundColor(DT.getBackgroundColor(this.isDark))
+  }
+
+  pageTransition() {
+    PageTransitionEnter({ duration: 300, curve: Curve.EaseOut })
+      .slide(SlideEffect.Right)
+    PageTransitionExit({ duration: 200, curve: Curve.EaseIn })
+      .slide(SlideEffect.Right)
   }
 }

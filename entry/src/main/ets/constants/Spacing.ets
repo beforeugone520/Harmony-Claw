@@ -21,9 +21,10 @@ export class Spacing {
   static readonly PAGE_SAFE_BOTTOM = 32    // 底部安全区域（含导航栏）
 
   // ========== 组件间距 ==========
-  static readonly CARD_PADDING = 16        // 卡片内边距
+  static readonly CARD_PADDING = 16        // 卡片内边距 (统一16px)
   static readonly CARD_GAP = 12            // 卡片间距
-  static readonly LIST_ITEM_HEIGHT = 56    // 列表项高度
+  static readonly LIST_ITEM_HEIGHT = 60    // 列表项高度 (优化至60px)
+  static readonly SECTION_GAP = 24         // Section间距 (增加至24px)
   static readonly LIST_ITEM_GAP = 0        // 列表项间距
   static readonly BUTTON_HEIGHT = 40       // 标准按钮高度
   static readonly BUTTON_HEIGHT_SMALL = 32 // 小按钮高度

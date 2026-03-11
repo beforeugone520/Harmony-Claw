@@ -3,7 +3,7 @@
   "name": "记账热量管理",
   "version": "1.0.0",
   "description": "记录账单和食品热量，提供统计分析",
-  "author": "OpenClaw",
+  "author": "BeforeUgone",
   "tools": [
     {
       "name": "write_bill",

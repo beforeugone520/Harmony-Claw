@@ -12,16 +12,9 @@ interface DialogResult {
 export struct GatewayCard {
   @Prop gateway: Gateway;
   @Prop isSelected: boolean = false;
+  @Prop isDark: boolean = false;
   onConnect?: () => void;
   onDelete?: () => void;
-
-  private isDarkMode(): boolean {
-    try {
-      return AppStorage.get<boolean>('isSystemDarkMode') ?? false
-    } catch {
-      return false
-    }
-  }
 
   private showDeleteConfirm(): void {
     promptAction.showDialog({
@@ -46,19 +39,19 @@ export struct GatewayCard {
     }).catch(() => {});
   }
 
-  private getStatusColor(): ResourceColor {
-    if (!this.gateway) return $r('app.color.text_tertiary');
+  private getStatusColor(): string {
+    if (!this.gateway) return this.isDark ? DT.DARK_TEXT_TERTIARY : DT.LIGHT_TEXT_TERTIARY;
     switch (this.gateway.status) {
       case GatewayStatus.ONLINE:
         return DT.IOS_GREEN;
       case GatewayStatus.OFFLINE:
-        return $r('app.color.text_tertiary');
+        return this.isDark ? DT.DARK_TEXT_TERTIARY : DT.LIGHT_TEXT_TERTIARY;
       case GatewayStatus.ERROR:
         return DT.IOS_RED;
       case GatewayStatus.CONNECTING:
         return DT.IOS_ORANGE;
       default:
-        return $r('app.color.text_tertiary');
+        return this.isDark ? DT.DARK_TEXT_TERTIARY : DT.LIGHT_TEXT_TERTIARY;
     }
   }
 
@@ -88,9 +81,9 @@ export struct GatewayCard {
             .height(48)
             .fill(DT.IOS_BLUE + '20')
 
-          SymbolGlyph($r('sys.symbol.icloud'))
+          Text('☁️')
             .fontSize(22)
-            .fontColor([DT.IOS_BLUE])
+            .fontColor(DT.IOS_BLUE)
         }
         .width(48)
         .height(48)
@@ -100,17 +93,17 @@ export struct GatewayCard {
           Text(this.gateway?.name || '未命名')
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
-            .fontColor($r('app.color.text_primary'))
+            .fontColor(this.isDark ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
 
           Text(`${this.gateway?.host || 'unknown'}:${this.gateway?.port || 0}`)
             .fontSize(13)
-            .fontColor($r('app.color.text_secondary'))
+            .fontColor(this.isDark ? DT.DARK_TEXT_SECONDARY : DT.LIGHT_TEXT_SECONDARY)
 
           Text(`v${this.gateway?.version || '1.0'}`)
             .fontSize(11)
-            .fontColor($r('app.color.text_tertiary'))
+            .fontColor(this.isDark ? DT.DARK_TEXT_TERTIARY : DT.LIGHT_TEXT_TERTIARY)
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Start)
@@ -132,7 +125,7 @@ export struct GatewayCard {
 
           Text(this.gateway?.lastSeen ? DateUtils.formatRelativeTime(this.gateway.lastSeen) : '未知')
             .fontSize(11)
-            .fontColor($r('app.color.text_tertiary'))
+            .fontColor(this.isDark ? DT.DARK_TEXT_TERTIARY : DT.LIGHT_TEXT_TERTIARY)
         }
         .alignItems(HorizontalAlign.End)
       }
@@ -182,13 +175,13 @@ export struct GatewayCard {
     }
     .width('100%')
     .padding(SP.L)
-    .backgroundColor(this.isDarkMode() ? '#1C1C1E' : '#FFFFFF')
+    .backgroundColor(this.isDark ? '#1C1C1E' : '#FFFFFF')
     .borderRadius(16)
     .border({
       width: this.isSelected ? 2 : 0,
       color: DT.IOS_BLUE
     })
-    .shadow(this.isDarkMode() ? undefined : {
+    .shadow(this.isDark ? undefined : {
       radius: 8,
       color: 'rgba(0,0,0,0.06)',
       offsetX: 0,

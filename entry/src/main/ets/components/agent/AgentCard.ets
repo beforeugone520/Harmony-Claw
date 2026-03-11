@@ -48,22 +48,22 @@ export struct AgentCard {
     }
   }
 
-  private getTypeIcon(): Resource {
+  private getTypeIcon(): string {
     switch (this.agent.type) {
       case 'main':
-        return $r('sys.symbol.house.fill')
+        return '🏠'
       case 'learning':
-        return $r('sys.symbol.book.fill')
+        return '📚'
       case 'note':
-        return $r('sys.symbol.note.text')
+        return '📝'
       case 'accounting':
-        return $r('sys.symbol.chart.pie.fill')
+        return '📊'
       case 'reminder':
-        return $r('sys.symbol.alarm.fill')
+        return '⏰'
       case 'coding':
-        return $r('sys.symbol.terminal.fill')
+        return '💻'
       default:
-        return $r('sys.symbol.cpu.fill')
+        return '🤖'
     }
   }
 
@@ -97,9 +97,9 @@ export struct AgentCard {
             .height(48)
             .fill(this.getTypeColor() + '20')
 
-          SymbolGlyph(this.getTypeIcon())
+          Text(this.getTypeIcon())
             .fontSize(22)
-            .fontColor([this.getTypeColor()])
+            .fontColor(this.getTypeColor())
         }
         .width(48)
         .height(48)
@@ -110,7 +110,7 @@ export struct AgentCard {
             Text(this.agent.displayName)
               .fontSize(16)
               .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_primary'))
+              .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
 
             // Status indicator
             Row({ space: 4 }) {
@@ -129,7 +129,7 @@ export struct AgentCard {
           // Type label
           Text(this.agent.type.toUpperCase())
             .fontSize(10)
-            .fontColor($r('app.color.text_tertiary'))
+            .fontColor(this.isDarkMode() ? DT.DARK_TEXT_TERTIARY : DT.LIGHT_TEXT_TERTIARY)
             .backgroundColor(this.isDarkMode() ? '#2C2C2E' : '#F2F2F7')
             .padding({ left: SP.XS, right: SP.XS, top: 2, bottom: 2 })
             .borderRadius(4)
@@ -138,7 +138,7 @@ export struct AgentCard {
           if (this.agent.theme) {
             Text(this.agent.theme)
               .fontSize(12)
-              .fontColor($r('app.color.text_secondary'))
+              .fontColor(this.isDarkMode() ? DT.DARK_TEXT_SECONDARY : DT.LIGHT_TEXT_SECONDARY)
               .maxLines(1)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
           }
@@ -148,9 +148,9 @@ export struct AgentCard {
 
         // Selected indicator
         if (this.isSelected) {
-          SymbolGlyph($r('sys.symbol.checkmark.circle.fill'))
+          Text('✓')
             .fontSize(20)
-            .fontColor([DT.IOS_BLUE])
+            .fontColor(DT.IOS_BLUE)
         }
       }
       .width('100%')
@@ -167,30 +167,30 @@ export struct AgentCard {
             Text(String(this.agent.metrics.totalConversations))
               .fontSize(16)
               .fontWeight(FontWeight.Bold)
-              .fontColor($r('app.color.text_primary'))
+              .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
             Text('会话')
               .fontSize(11)
-              .fontColor($r('app.color.text_tertiary'))
+              .fontColor(this.isDarkMode() ? DT.DARK_TEXT_TERTIARY : DT.LIGHT_TEXT_TERTIARY)
           }
 
           Column({ space: 2 }) {
             Text(String(this.agent.metrics.totalMessages))
               .fontSize(16)
               .fontWeight(FontWeight.Bold)
-              .fontColor($r('app.color.text_primary'))
+              .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
             Text('消息')
               .fontSize(11)
-              .fontColor($r('app.color.text_tertiary'))
+              .fontColor(this.isDarkMode() ? DT.DARK_TEXT_TERTIARY : DT.LIGHT_TEXT_TERTIARY)
           }
 
           Column({ space: 2 }) {
             Text(`${this.agent.metrics.avgResponseTime}ms`)
               .fontSize(16)
               .fontWeight(FontWeight.Bold)
-              .fontColor($r('app.color.text_primary'))
+              .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
             Text('响应')
               .fontSize(11)
-              .fontColor($r('app.color.text_tertiary'))
+              .fontColor(this.isDarkMode() ? DT.DARK_TEXT_TERTIARY : DT.LIGHT_TEXT_TERTIARY)
           }
         }
         .width('100%')

@@ -111,10 +111,10 @@ export struct HmButton {
     .backgroundColor(this.getBgColor())
     .borderWidth(this.btnType === ButtonType.SECONDARY ? 1 : 0)
     .borderColor(this.getBorderColor())
-    .borderRadius(SP.RADIUS_S)
+    .borderRadius(SP.RADIUS_M) // 统一12px圆角
     .justifyContent(FlexAlign.Center)
-    .scale({ x: this.isPressed ? 0.98 : 1.0, y: this.isPressed ? 0.98 : 1.0 })
-    .opacity(this.isPressed ? 0.9 : 1.0)
+    .scale({ x: this.isPressed ? 0.97 : 1.0, y: this.isPressed ? 0.97 : 1.0 })
+    .opacity(this.isPressed ? 0.95 : 1.0)
     .animation({ duration: ANI.DURATION_FAST, curve: Curve.EaseOut })
     .onTouch((event: TouchEvent) => {
       if (event.type === TouchType.Down) {

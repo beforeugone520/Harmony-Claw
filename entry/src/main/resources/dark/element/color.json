@@ -91,6 +91,46 @@
     {
       "name": "shadow",
       "value": "#33000000"
+    },
+    {
+      "name": "status_online",
+      "value": "#30D158"
+    },
+    {
+      "name": "status_offline",
+      "value": "#8E8E93"
+    },
+    {
+      "name": "status_busy",
+      "value": "#FFB340"
+    },
+    {
+      "name": "status_error",
+      "value": "#FF453A"
+    },
+    {
+      "name": "status_online_bg",
+      "value": "#1C3328"
+    },
+    {
+      "name": "status_offline_bg",
+      "value": "#2C2C2E"
+    },
+    {
+      "name": "status_busy_bg",
+      "value": "#332200"
+    },
+    {
+      "name": "status_error_bg",
+      "value": "#331111"
+    },
+    {
+      "name": "gradient_blue_start",
+      "value": "#0A84FF"
+    },
+    {
+      "name": "gradient_blue_end",
+      "value": "#5E5CE6"
     }
   ]
 }

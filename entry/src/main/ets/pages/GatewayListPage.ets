@@ -1,10 +1,16 @@
+/**
+ * GatewayListPage.ets
+ * 网关管理页面 - 优化版
+ * 遵循主页设计系统规范
+ */
 import { router } from '@kit.ArkUI';
 import { Gateway, GatewayStatus } from '../models/Gateway';
 import { GatewayViewModel } from '../viewmodels/GatewayViewModel';
 import { GatewayCard } from '../components/gateway/GatewayCard';
-import { Spacing as SP } from '../constants';
+import { DesignTokens as DT, Spacing as SP, Typography as TYP, Animation as ANI } from '../constants';
 import { LoadingState } from '../components/LoadingState';
 import { EmptyState } from '../components/EmptyState';
+import { HmCard } from '../components/common/HmCard';
 import { getHttpService } from '../services/HttpService';
 
 @Entry
@@ -16,17 +22,26 @@ struct GatewayListPage {
   @State newGatewayPort: string = '8333';
   @State newGatewayName: string = '';
   @State testResult: string = '';
+  @State isDark: boolean = false;
+
+  // Safe area for immersive mode
+  @State topSafeArea: number = 37
+
   aboutToAppear() {
     this.viewModel.initialize().catch((e: Error) => {
       console.error(`[GatewayListPage] Failed to initialize: ${JSON.stringify(e)}`);
     });
   }
 
+  onPageShow() {
+    this.viewModel.refresh().catch((e: Error) => {
+      console.error(`[GatewayListPage] Refresh failed: ${JSON.stringify(e)}`);
+    });
+  }
+
   // 测试连接后端
   private async testConnection(): Promise<void> {
     const http = getHttpService();
-
-    // 使用输入框的 IP 和端口
     const host = this.newGatewayIp.length > 0 ? this.newGatewayIp : '192.168.1.100';
     const port = parseInt(this.newGatewayPort) || 8333;
 
@@ -74,12 +89,9 @@ struct GatewayListPage {
   private async handleConnectGateway(gateway: Gateway): Promise<void> {
     try {
       if (gateway.status === GatewayStatus.ONLINE) {
-        // 在线状态：执行连接
         await this.viewModel.connectGateway(gateway);
       } else {
-        // 离线状态：刷新状态
         const result = await this.viewModel.checkGatewayStatus(gateway);
-        // 通过ViewModel更新网关状态，避免直接修改对象
         await this.viewModel.updateGatewayStatus(gateway, result.status);
         this.testResult = result.error
           ? `状态检测失败: ${result.error}`
@@ -91,53 +103,81 @@ struct GatewayListPage {
   }
 
   @Builder
+  StatCard(title: string, value: string, color: string) {
+    Column() {
+      HmCard({
+        cardPadding: SP.M,
+        cardBgColor: DT.getSurfaceColor(this.isDark),
+        cardBorderRadius: SP.RADIUS_L,
+        shadowLevel: 'resting'
+      }) {
+        Column({ space: SP.XS }) {
+          Text(value)
+            .fontSize(28)
+            .fontWeight(TYP.WEIGHT_BOLD)
+            .fontColor(color)
+
+          Text(title)
+            .fontSize(TYP.SIZE_CAPTION)
+            .fontColor(DT.getTextSecondary(this.isDark))
+        }
+        .width('100%')
+        .alignItems(HorizontalAlign.Center)
+      }
+    }
+    .width('100%')
+    .layoutWeight(1)
+  }
+
+  @Builder
   AddGatewayDialog() {
     Column({ space: SP.L }) {
       Text('添加网关')
-        .fontSize(18)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.text_primary'))
+        .fontSize(TYP.SIZE_H2)
+        .fontWeight(TYP.WEIGHT_BOLD)
+        .fontColor(DT.getTextPrimary(this.isDark))
 
       TextInput({ placeholder: '网关名称 (可选)', text: $$this.newGatewayName })
         .width('100%')
         .height(44)
-        .placeholderColor($r('app.color.text_tertiary'))
-        .backgroundColor($r('app.color.background_tertiary'))
-        .borderRadius(8)
+        .placeholderColor(DT.getTextSecondary(this.isDark))
+        .backgroundColor(DT.LIGHT_BG_PRIMARY)
+        .borderRadius(SP.RADIUS_M)
 
       TextInput({ placeholder: 'IP 地址', text: $$this.newGatewayIp })
         .width('100%')
         .height(44)
-        .placeholderColor($r('app.color.text_tertiary'))
-        .backgroundColor($r('app.color.background_tertiary'))
-        .borderRadius(8)
+        .placeholderColor(DT.getTextSecondary(this.isDark))
+        .backgroundColor(DT.LIGHT_BG_PRIMARY)
+        .borderRadius(SP.RADIUS_M)
 
       TextInput({ placeholder: '端口', text: $$this.newGatewayPort })
         .width('100%')
         .height(44)
-        .placeholderColor($r('app.color.text_tertiary'))
-        .backgroundColor($r('app.color.background_tertiary'))
-        .borderRadius(8)
+        .placeholderColor(DT.getTextSecondary(this.isDark))
+        .backgroundColor(DT.LIGHT_BG_PRIMARY)
+        .borderRadius(SP.RADIUS_M)
         .type(InputType.Number)
 
       if (this.testResult.length > 0) {
         Text(this.testResult)
-          .fontSize(12)
-          .fontColor(this.testResult.includes('✅') ? $r('app.color.success') : $r('app.color.text_secondary'))
+          .fontSize(TYP.SIZE_SMALL)
+          .fontColor(this.testResult.includes('✅') ? DT.SUCCESS : DT.ERROR)
           .maxLines(3)
       }
 
       if (this.viewModel.errorMessage.length > 0) {
         Text(this.viewModel.errorMessage)
-          .fontSize(12)
-          .fontColor($r('app.color.error'))
+          .fontSize(TYP.SIZE_SMALL)
+          .fontColor(DT.ERROR)
           .maxLines(5)
 
         Button('强制添加 (跳过验证)')
           .width('100%')
           .height(40)
-          .backgroundColor($r('app.color.warning'))
-          .fontColor($r('app.color.text_inverse'))
+          .backgroundColor(DT.WARNING)
+          .fontColor('#FFFFFF')
+          .borderRadius(SP.RADIUS_M)
           .onClick(() => { this.handleAddGateway(true).catch((e: Error) => console.error(JSON.stringify(e))); })
       }
 
@@ -145,8 +185,9 @@ struct GatewayListPage {
         Button('取消')
           .layoutWeight(1)
           .height(44)
-          .backgroundColor($r('app.color.background_tertiary'))
-          .fontColor($r('app.color.text_primary'))
+          .backgroundColor(DT.LIGHT_BG_PRIMARY)
+          .fontColor(DT.getTextPrimary(this.isDark))
+          .borderRadius(SP.RADIUS_M)
           .onClick((): void => {
             this.showAddDialog = false;
             this.viewModel.errorMessage = '';
@@ -156,7 +197,9 @@ struct GatewayListPage {
         Button('添加')
           .layoutWeight(1)
           .height(44)
-          .backgroundColor($r('app.color.brand_primary'))
+          .backgroundColor(DT.BRAND_PRIMARY)
+          .fontColor('#FFFFFF')
+          .borderRadius(SP.RADIUS_M)
           .enabled(this.newGatewayIp.length > 0 && !this.viewModel.isLoading)
           .onClick(() => { this.handleAddGateway().catch((err: Error) => console.error(JSON.stringify(err))); })
       }
@@ -164,19 +207,40 @@ struct GatewayListPage {
     }
     .width('80%')
     .padding(SP.L)
-    .backgroundColor($r('app.color.surface_card'))
-    .borderRadius(16)
+    .backgroundColor(DT.getSurfaceColor(this.isDark))
+    .borderRadius(SP.RADIUS_L)
   }
 
   build() {
     Stack() {
       Column({ space: 0 }) {
-        // Header
+        // 顶部安全区域占位
+        Column()
+          .width('100%')
+          .height(this.topSafeArea)
+          .backgroundColor(DT.getBackgroundColor(this.isDark))
+
+        // Header - 统一风格
         Row() {
+          Button() {
+            Text('‹')
+              .fontSize(28)
+              .fontWeight(TYP.WEIGHT_MEDIUM)
+              .fontColor(DT.getTextPrimary(this.isDark))
+          }
+          .width(44)
+          .height(44)
+          .backgroundColor('transparent')
+          .scale({ x: 1, y: 1 })
+          .animation(ANI.pressFeedbackFine())
+          .onClick(() => {
+            router.back();
+          })
+
           Text('网关管理')
-            .fontSize(18)
-            .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.text_primary'))
+            .fontSize(TYP.SIZE_H2)
+            .fontWeight(TYP.WEIGHT_MEDIUM)
+            .fontColor(DT.getTextPrimary(this.isDark))
 
           Blank()
 
@@ -184,10 +248,13 @@ struct GatewayListPage {
           Button('测试')
             .width(60)
             .height(36)
-            .backgroundColor($r('app.color.brand_secondary'))
-            .fontColor($r('app.color.text_inverse'))
-            .fontSize(14)
+            .backgroundColor(DT.BRAND_SECONDARY)
+            .fontColor('#FFFFFF')
+            .fontSize(TYP.SIZE_BODY)
+            .borderRadius(SP.RADIUS_M)
             .margin({ right: SP.S })
+            .scale({ x: 1, y: 1 })
+            .animation(ANI.pressFeedbackFine())
             .onClick((): void => {
               this.testConnection();
             })
@@ -195,68 +262,58 @@ struct GatewayListPage {
           Button('+')
             .width(40)
             .height(40)
-            .backgroundColor($r('app.color.brand_primary'))
-            .fontColor($r('app.color.text_inverse'))
+            .backgroundColor(DT.BRAND_PRIMARY)
+            .fontColor('#FFFFFF')
             .fontSize(24)
+            .borderRadius(SP.RADIUS_M)
+            .scale({ x: 1, y: 1 })
+            .animation(ANI.pressFeedbackFine())
             .onClick((): void => {
-              router.pushUrl({ url: 'pages/AddGatewayPage' })
+              this.showAddDialog = true;
             })
         }
         .width('100%')
         .height(56)
-        .padding({ left: SP.L, right: SP.L })
-        .backgroundColor($r('app.color.background_secondary'))
+        .padding({ left: SP.S, right: SP.M })
+        .backgroundColor(DT.getBackgroundColor(this.isDark))
 
-        // Stats
+        // Stats - 使用 HmCard
         Row({ space: SP.M }) {
-          Column({ space: SP.XS }) {
-            Text(String(this.viewModel.getOnlineCount()))
-              .fontSize(24)
-              .fontWeight(FontWeight.Bold)
-              .fontColor($r('app.color.success'))
-            Text('在线网关')
-              .fontSize(12)
-              .fontColor($r('app.color.text_secondary'))
-          }
-          .layoutWeight(1)
-
-          Column({ space: SP.XS }) {
-            Text(String(this.viewModel.getTotalCount()))
-              .fontSize(24)
-              .fontWeight(FontWeight.Bold)
-              .fontColor($r('app.color.brand_primary'))
-            Text('总网关数')
-              .fontSize(12)
-              .fontColor($r('app.color.text_secondary'))
-          }
-          .layoutWeight(1)
+          this.StatCard('在线网关', String(this.viewModel.getOnlineCount()), DT.SUCCESS);
+          this.StatCard('总网关数', String(this.viewModel.getTotalCount()), DT.BRAND_PRIMARY);
         }
         .width('100%')
         .padding(SP.L)
-        .backgroundColor($r('app.color.surface_card'))
 
         // 测试结果
         if (this.testResult.length > 0) {
-          Row() {
-            Text(this.testResult)
-              .fontSize(12)
-              .fontColor(this.testResult.includes('成功') ? $r('app.color.success') : $r('app.color.error'))
-              .padding(SP.M)
+          Column() {
+            HmCard({
+              cardPadding: SP.M,
+              cardBgColor: this.testResult.includes('成功') ? DT.SUCCESS_BG : DT.ERROR_BG,
+              cardBorderRadius: SP.RADIUS_M
+            }) {
+              Text(this.testResult)
+                .fontSize(TYP.SIZE_SMALL)
+                .fontColor(this.testResult.includes('成功') ? DT.SUCCESS : DT.ERROR)
+            }
           }
-          .width('100%')
-          .backgroundColor(this.testResult.includes('成功') ? '#E8F5E9' : '#FFEBEE')
-          .borderRadius(8)
-          .margin({ left: SP.L, right: SP.L, top: SP.M })
+          .padding({ left: SP.L, right: SP.L, bottom: SP.M })
         }
 
         // Content
         if (this.viewModel.isLoading && this.viewModel.gateways.length === 0) {
-          LoadingState({ message: '加载中...' })
+          LoadingState({ message: '加载中...', mode: 'skeleton-list' })
+            .layoutWeight(1)
         } else if (this.viewModel.gateways.length === 0) {
           EmptyState({
+            icon: '📡',
             title: '暂无网关',
-            message: '点击右上角 + 按钮添加网关'
+            message: '点击右上角 + 按钮添加网关',
+            actionText: '刷新',
+            onAction: () => this.handleRefresh()
           })
+            .layoutWeight(1)
         } else {
           List({ space: SP.M }) {
             ForEach(this.viewModel.gateways.filter(g => g != null && g.id != null), (gateway: Gateway) => {
@@ -277,7 +334,7 @@ struct GatewayListPage {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor($r('app.color.background_primary'))
+      .backgroundColor(DT.getBackgroundColor(this.isDark))
 
       // Add Dialog
       if (this.showAddDialog) {
@@ -286,7 +343,7 @@ struct GatewayListPage {
         }
         .width('100%')
         .height('100%')
-        .backgroundColor($r('app.color.overlay_light'))
+        .backgroundColor(DT.OVERLAY_LIGHT)
         .justifyContent(FlexAlign.Center)
         .onClick(() => {
           this.showAddDialog = false;

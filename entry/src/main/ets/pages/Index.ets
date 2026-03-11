@@ -16,7 +16,7 @@ import { DesignTokens as DT } from '../constants/DesignTokens';
 
 // Interfaces for Builder parameters
 interface RingProgressParams {
-  icon: Resource
+  icon: string
   value: number
   total: number
   label: string
@@ -25,7 +25,7 @@ interface RingProgressParams {
 }
 
 interface StatCardParams {
-  icon: Resource
+  icon: string
   value: number
   label: string
   color: string
@@ -36,14 +36,14 @@ interface StatCardParams {
 interface QuickActionParams {
   title: string
   subtitle: string
-  icon: Resource
+  icon: string
   gradientColors: string[]
   index: number
   onClick: () => void
 }
 
 interface ListItemParams {
-  icon: Resource
+  icon: string
   iconBgColor: string
   iconColor: string
   title: string
@@ -53,7 +53,7 @@ interface ListItemParams {
 }
 
 interface EmptyStateParams {
-  icon: Resource
+  icon: string
   title: string
   subtitle: string
   actionText: string
@@ -61,12 +61,13 @@ interface EmptyStateParams {
 }
 
 interface SettingItemParams {
-  icon: Resource
+  icon: string
   iconColor: string
   title: string
   showToggle: boolean
   toggleValue?: boolean
   onClick?: () => void
+  onToggleChange?: (value: boolean) => void
 }
 
 @Entry
@@ -84,12 +85,31 @@ struct Index {
   // Animation states for interactions
   @State pressedCardIndex: number = -1
   @State pressedActionIndex: number = -1
+  @State actionTouchStartX: number = 0
+  @State actionTouchStartY: number = 0
 
   // Tab animation config
   private tabAnimationDuration: number = 300
   private tabAnimationCurve: Curve = Curve.EaseInOut
 
+  // Safe area insets for immersive mode
+  @State topSafeArea: number = 0
+  @State bottomSafeArea: number = 0
+
+  // Dark mode state
+  @State isDark: boolean = false
+
+  private updateSafeArea(): void {
+    // Use fixed safe area values for immersive mode
+    // Top safe area for status bar/notch
+    this.topSafeArea = 37
+    // Bottom safe area for gesture navigation bar + tab bar height (80)
+    this.bottomSafeArea = 80
+  }
+
   aboutToAppear() {
+    // Get safe area insets
+    this.updateSafeArea()
     this.initializeViewModels();
     this.updateThemeColors();
     this.setupThemeListener();
@@ -109,8 +129,8 @@ struct Index {
       } else {
         await this.agentViewModel.initialize();
       }
-    } catch (e) {
-      console.error(`[Index] Failed to initialize view models: ${JSON.stringify(e)}`);
+    } catch (error) {
+      console.error(`[Index] Failed to initialize view models: ${JSON.stringify(error)}`);
     }
   }
 
@@ -143,8 +163,8 @@ struct Index {
         console.log('[Index] Refreshing processes from gateway...');
         await this.processViewModel.refresh();
       }
-    } catch (e) {
-      console.error(`[Index] Failed to sync gateway state: ${JSON.stringify(e)}`);
+    } catch (error) {
+      console.error(`[Index] Failed to sync gateway state: ${JSON.stringify(error)}`);
     }
   }
 
@@ -154,11 +174,7 @@ struct Index {
   // ========== Helper Methods ==========
 
   private isDarkMode(): boolean {
-    try {
-      return AppStorage.get<boolean>('isSystemDarkMode') ?? false
-    } catch {
-      return false
-    }
+    return this.isDark
   }
 
   private getHeaderBgColor(): ResourceColor {
@@ -189,11 +205,11 @@ struct Index {
     Column({ space: SP.XS }) {
       Text(this.getTodayDate())
         .fontSize(13)
-        .fontColor($r('app.color.text_secondary'))
+        .fontColor(this.isDarkMode() ? DT.DARK_TEXT_SECONDARY : DT.LIGHT_TEXT_SECONDARY)
       Text(this.getGreeting())
         .fontSize(28)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.text_primary'))
+        .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
     }
     .width('100%')
     .alignItems(HorizontalAlign.Start)
@@ -202,9 +218,6 @@ struct Index {
 
   @Builder
   RingProgressCard(params: RingProgressParams) {
-    let progress = params.total > 0 ? params.value / params.total : 0
-    let isPressed = this.pressedCardIndex === params.index
-
     Column({ space: SP.S }) {
       Stack({ alignContent: Alignment.Center }) {
         // Background ring
@@ -225,9 +238,9 @@ struct Index {
           .strokeLineCap(LineCapStyle.Round)
 
         // Center icon
-        SymbolGlyph(params.icon)
+        Text(params.icon)
           .fontSize(20)
-          .fontColor([params.color])
+          .fontColor(params.color)
       }
       .width(56)
       .height(56)
@@ -235,11 +248,11 @@ struct Index {
       Text(`${params.value}/${params.total}`)
         .fontSize(15)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.text_primary'))
+        .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
 
       Text(params.label)
         .fontSize(11)
-        .fontColor($r('app.color.text_secondary'))
+        .fontColor(this.isDarkMode() ? DT.DARK_TEXT_SECONDARY : DT.LIGHT_TEXT_SECONDARY)
     }
     .width(88)
     .padding(SP.M)
@@ -251,7 +264,7 @@ struct Index {
       offsetX: 0,
       offsetY: 2
     })
-    .scale({ x: isPressed ? 0.95 : 1, y: isPressed ? 0.95 : 1 })
+    .scale({ x: this.pressedCardIndex === params.index ? 0.95 : 1, y: this.pressedCardIndex === params.index ? 0.95 : 1 })
     .animation({ duration: 100, curve: Curve.EaseOut })
     .onTouch((event: TouchEvent) => {
       if (event.type === TouchType.Down) {
@@ -264,8 +277,6 @@ struct Index {
 
   @Builder
   StatCardV2(params: StatCardParams) {
-    let isPressed = this.pressedCardIndex === params.index
-
     Column({ space: SP.S }) {
       Stack({ alignContent: Alignment.Center }) {
         Circle()
@@ -273,9 +284,9 @@ struct Index {
           .height(48)
           .fill(params.color + '20') // 20% opacity
 
-        SymbolGlyph(params.icon)
+        Text(params.icon)
           .fontSize(22)
-          .fontColor([params.color])
+          .fontColor(params.color)
       }
       .width(48)
       .height(48)
@@ -284,7 +295,7 @@ struct Index {
         Text(String(params.value))
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
+          .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
 
         if (params.trend) {
           Text(params.trend)
@@ -298,7 +309,7 @@ struct Index {
 
       Text(params.label)
         .fontSize(11)
-        .fontColor($r('app.color.text_secondary'))
+        .fontColor(this.isDarkMode() ? DT.DARK_TEXT_SECONDARY : DT.LIGHT_TEXT_SECONDARY)
     }
     .width(88)
     .padding(SP.M)
@@ -310,7 +321,7 @@ struct Index {
       offsetX: 0,
       offsetY: 2
     })
-    .scale({ x: isPressed ? 0.95 : 1, y: isPressed ? 0.95 : 1 })
+    .scale({ x: this.pressedCardIndex === params.index ? 0.95 : 1, y: this.pressedCardIndex === params.index ? 0.95 : 1 })
     .animation({ duration: 100, curve: Curve.EaseOut })
     .onTouch((event: TouchEvent) => {
       if (event.type === TouchType.Down) {
@@ -328,7 +339,7 @@ struct Index {
         Text('概览')
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
+          .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
         Blank()
       }
       .width('100%')
@@ -338,7 +349,7 @@ struct Index {
         Row({ space: SP.M }) {
           // Gateway online rate - ring progress
           this.RingProgressCard({
-            icon: $r('sys.symbol.icloud'),
+            icon: '☁️',
             value: this.gatewayViewModel.getOnlineCount(),
             total: this.gatewayViewModel.getTotalCount() || 1,
             label: '网关在线',
@@ -348,7 +359,7 @@ struct Index {
 
           // Running processes - stat card
           this.StatCardV2({
-            icon: $r('sys.symbol.bolt.fill'),
+            icon: '⚡',
             value: this.processViewModel.getRunningCount(),
             label: '运行进程',
             color: DT.IOS_ORANGE,
@@ -358,7 +369,7 @@ struct Index {
 
           // Agent online - ring progress
           this.RingProgressCard({
-            icon: $r('sys.symbol.cpu.fill'),
+            icon: '🤖',
             value: this.agentViewModel.getOnlineCount(),
             total: this.agentViewModel.agents.length || 1,
             label: 'Agent在线',
@@ -368,7 +379,7 @@ struct Index {
 
           // Active sessions - stat card
           this.StatCardV2({
-            icon: $r('sys.symbol.bubble.left.fill'),
+            icon: '💬',
             value: this.chatViewModel.sessions.length,
             label: '活跃会话',
             color: DT.IOS_INDIGO,
@@ -384,8 +395,6 @@ struct Index {
 
   @Builder
   QuickActionButton(params: QuickActionParams) {
-    let isPressed = this.pressedActionIndex === params.index
-
     Column({ space: SP.XS }) {
       Stack({ alignContent: Alignment.Center }) {
         Column()
@@ -394,9 +403,9 @@ struct Index {
           .borderRadius(16)
           .backgroundColor(params.gradientColors[0])
 
-        SymbolGlyph(params.icon)
+        Text(params.icon)
           .fontSize(28)
-          .fontColor(['#FFFFFF'])
+          .fontColor('#FFFFFF')
           .fontWeight(FontWeight.Medium)
       }
       .width(56)
@@ -405,11 +414,11 @@ struct Index {
       Text(params.title)
         .fontSize(13)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.text_primary'))
+        .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
 
       Text(params.subtitle)
         .fontSize(11)
-        .fontColor($r('app.color.text_secondary'))
+        .fontColor(this.isDarkMode() ? DT.DARK_TEXT_SECONDARY : DT.LIGHT_TEXT_SECONDARY)
     }
     .width('100%')
     .padding(SP.M)
@@ -421,16 +430,32 @@ struct Index {
       offsetX: 0,
       offsetY: 2
     })
-    .scale({ x: isPressed ? 0.95 : 1, y: isPressed ? 0.95 : 1 })
+    .scale({ x: this.pressedActionIndex === params.index ? 0.95 : 1, y: this.pressedActionIndex === params.index ? 0.95 : 1 })
     .animation({ duration: 100, curve: Curve.EaseOut })
     .onTouch((event: TouchEvent) => {
-      if (event.type === TouchType.Down) {
-        this.pressedActionIndex = params.index
-      } else if (event.type === TouchType.Up) {
-        this.pressedActionIndex = -1
-        params.onClick()
-      } else if (event.type === TouchType.Cancel) {
-        this.pressedActionIndex = -1
+      switch (event.type) {
+        case TouchType.Down:
+          this.pressedActionIndex = params.index
+          this.actionTouchStartX = event.touches[0].screenX
+          this.actionTouchStartY = event.touches[0].screenY
+          break
+        case TouchType.Up:
+          const endX = event.touches[0].screenX
+          const endY = event.touches[0].screenY
+          const moveDistance = Math.sqrt(
+            Math.pow(endX - this.actionTouchStartX, 2) +
+            Math.pow(endY - this.actionTouchStartY, 2)
+          )
+          const shouldTriggerClick = moveDistance < 10
+          this.pressedActionIndex = -1
+          // Only trigger click if moved less than 10 pixels
+          if (shouldTriggerClick) {
+            params.onClick()
+          }
+          break
+        case TouchType.Cancel:
+          this.pressedActionIndex = -1
+          break
       }
     })
   }
@@ -442,7 +467,7 @@ struct Index {
         Text('快捷操作')
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
+          .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
         Blank()
       }
       .width('100%')
@@ -453,7 +478,7 @@ struct Index {
           this.QuickActionButton({
             title: '网关管理',
             subtitle: '管理连接',
-            icon: $r('sys.symbol.rectangle.connected.to.line.below'),
+            icon: '🔌',
             gradientColors: [DT.IOS_BLUE, DT.IOS_INDIGO],
             index: 0,
             onClick: () => router.pushUrl({ url: 'pages/GatewayListPage' })
@@ -464,7 +489,7 @@ struct Index {
           this.QuickActionButton({
             title: '进程监控',
             subtitle: '查看状态',
-            icon: $r('sys.symbol.bolt.fill'),
+            icon: '⚡',
             gradientColors: [DT.IOS_ORANGE, '#FF9F0A'],
             index: 1,
             onClick: () => router.pushUrl({ url: 'pages/ProcessListPage' })
@@ -475,7 +500,7 @@ struct Index {
           this.QuickActionButton({
             title: '记账热量',
             subtitle: '今日 3 笔',
-            icon: $r('sys.symbol.chart.pie.fill'),
+            icon: '📊',
             gradientColors: [DT.IOS_GREEN, '#30D158'],
             index: 2,
             onClick: () => router.pushUrl({ url: 'pages/AccountingPage' })
@@ -486,7 +511,7 @@ struct Index {
           this.QuickActionButton({
             title: '日程管理',
             subtitle: '2 个待办',
-            icon: $r('sys.symbol.calendar'),
+            icon: '📅',
             gradientColors: [DT.IOS_INDIGO, DT.IOS_PURPLE],
             index: 3,
             onClick: () => router.pushUrl({ url: 'pages/SchedulePage' })
@@ -513,7 +538,7 @@ struct Index {
         Text('Agent 数据')
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
+          .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
         Blank()
       }
       .width('100%')
@@ -521,7 +546,7 @@ struct Index {
 
       // Accounting Entry
       this.ListItemCard({
-        icon: $r('sys.symbol.chart.pie.fill'),
+        icon: '📊',
         iconBgColor: DT.IOS_GREEN + '20',
         iconColor: DT.IOS_GREEN,
         title: '记账热量',
@@ -532,7 +557,7 @@ struct Index {
 
       // Schedule Entry
       this.ListItemCard({
-        icon: $r('sys.symbol.calendar.badge.clock'),
+        icon: '📅',
         iconBgColor: DT.IOS_INDIGO + '20',
         iconColor: DT.IOS_INDIGO,
         title: '日程管理',
@@ -557,9 +582,9 @@ struct Index {
           .height(44)
           .fill(params.iconBgColor)
 
-        SymbolGlyph(params.icon)
+        Text(params.icon)
           .fontSize(20)
-          .fontColor([params.iconColor])
+          .fontColor(params.iconColor)
       }
       .width(44)
       .height(44)
@@ -569,11 +594,11 @@ struct Index {
         Text(params.title)
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.text_primary'))
+          .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
 
         Text(params.subtitle)
           .fontSize(13)
-          .fontColor($r('app.color.text_secondary'))
+          .fontColor(this.isDarkMode() ? DT.DARK_TEXT_SECONDARY : DT.LIGHT_TEXT_SECONDARY)
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
@@ -583,15 +608,15 @@ struct Index {
         if (params.badge) {
           Text(params.badge)
             .fontSize(12)
-            .fontColor($r('app.color.text_secondary'))
+            .fontColor(this.isDarkMode() ? DT.DARK_TEXT_SECONDARY : DT.LIGHT_TEXT_SECONDARY)
             .backgroundColor(this.isDarkMode() ? '#2C2C2E' : '#E5E5EA')
             .padding({ left: 8, right: 8, top: 4, bottom: 4 })
             .borderRadius(12)
         }
 
-        SymbolGlyph($r('sys.symbol.chevron.right'))
+        Text('›')
           .fontSize(14)
-          .fontColor([$r('app.color.text_tertiary')])
+          .fontColor(this.isDarkMode() ? DT.DARK_TEXT_TERTIARY : DT.LIGHT_TEXT_TERTIARY)
       }
     }
     .width('100%')
@@ -609,13 +634,13 @@ struct Index {
         Text('最近网关')
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
+          .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
 
         Blank()
 
         Text('查看更多')
           .fontSize(13)
-          .fontColor($r('app.color.brand_primary'))
+          .fontColor(DT.BRAND_PRIMARY)
           .onClick(() => {
             this.selectedTabIndex = 1
           })
@@ -625,7 +650,7 @@ struct Index {
 
       if (this.gatewayViewModel.gateways.length === 0) {
         this.EmptyState({
-          icon: $r('sys.symbol.icloud.slash'),
+          icon: '☁️',
           title: '暂无网关',
           subtitle: '点击添加您的第一个网关',
           actionText: '添加网关',
@@ -635,7 +660,8 @@ struct Index {
         ForEach(this.gatewayViewModel.gateways.filter(g => g != null).slice(0, 3), (gateway: Gateway) => {
           GatewayCard({
             gateway: gateway,
-            isSelected: this.gatewayViewModel.currentGateway?.id === gateway.id
+            isSelected: this.gatewayViewModel.currentGateway?.id === gateway.id,
+            isDark: this.isDarkMode()
           })
         }, (gateway: Gateway) => gateway.id)
       }
@@ -649,19 +675,19 @@ struct Index {
   @Builder
   EmptyState(params: EmptyStateParams) {
     Column({ space: SP.M }) {
-      SymbolGlyph(params.icon)
+      Text(params.icon)
         .fontSize(48)
-        .fontColor([$r('app.color.text_tertiary')])
+        .fontColor(this.isDarkMode() ? DT.DARK_TEXT_TERTIARY : DT.LIGHT_TEXT_TERTIARY)
         .opacity(0.5)
 
       Text(params.title)
         .fontSize(16)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.text_primary'))
+        .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
 
       Text(params.subtitle)
         .fontSize(13)
-        .fontColor($r('app.color.text_secondary'))
+        .fontColor(this.isDarkMode() ? DT.DARK_TEXT_SECONDARY : DT.LIGHT_TEXT_SECONDARY)
 
       Button(params.actionText)
         .fontSize(14)
@@ -684,6 +710,9 @@ struct Index {
   DashboardContent() {
     Scroll(this.dashboardScroller) {
       Column({ space: SP.XL }) {
+        // Top safe area spacer
+        Column().height(this.topSafeArea)
+
         // Welcome Header
         this.WelcomeHeader()
 
@@ -700,10 +729,10 @@ struct Index {
         this.RecentGatewaysSection()
 
         // Bottom safe area
-        Column().height(100)
+        Column().height(this.bottomSafeArea + 20)
       }
       .width('100%')
-      .padding(SP.L)
+      .padding({ left: SP.L, right: SP.L })
     }
     .layoutWeight(1)
     .scrollBar(BarState.Auto)
@@ -729,10 +758,13 @@ struct Index {
   GatewaysContent() {
     Scroll() {
       Column({ space: SP.L }) {
+        // Top safe area spacer
+        Column().height(this.topSafeArea)
+
         // Stats Row
         Row({ space: SP.M }) {
           this.StatCardV2({
-            icon: $r('sys.symbol.icloud'),
+            icon: '☁️',
             value: this.gatewayViewModel.getTotalCount(),
             label: '总网关数',
             color: DT.IOS_BLUE,
@@ -740,7 +772,7 @@ struct Index {
           })
 
           this.StatCardV2({
-            icon: $r('sys.symbol.checkmark.circle.fill'),
+            icon: '✓',
             value: this.gatewayViewModel.getOnlineCount(),
             label: '在线网关',
             color: DT.IOS_GREEN,
@@ -748,7 +780,7 @@ struct Index {
           })
 
           this.StatCardV2({
-            icon: $r('sys.symbol.xmark.circle.fill'),
+            icon: '✗',
             value: this.gatewayViewModel.gateways.length - this.gatewayViewModel.getOnlineCount(),
             label: '离线网关',
             color: DT.IOS_ORANGE,
@@ -763,14 +795,14 @@ struct Index {
           Text('网关列表')
             .fontSize(20)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.text_primary'))
+            .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
 
           Blank()
 
           Button() {
-            SymbolGlyph($r('sys.symbol.arrow.clockwise'))
+            Text('↻')
               .fontSize(16)
-              .fontColor([$r('app.color.brand_primary')])
+              .fontColor(DT.BRAND_PRIMARY)
           }
           .width(36)
           .height(36)
@@ -787,7 +819,7 @@ struct Index {
           this.LoadingState('加载中...')
         } else if (this.gatewayViewModel.gateways.length === 0) {
           this.EmptyState({
-            icon: $r('sys.symbol.icloud.slash'),
+            icon: '☁️',
             title: '暂无网关',
             subtitle: '点击添加网关按钮开始',
             actionText: '添加网关',
@@ -804,7 +836,7 @@ struct Index {
           }, (gateway: Gateway) => gateway.id)
         }
 
-        Column().height(100)
+        Column().height(this.bottomSafeArea + 20)
       }
       .width('100%')
       .padding({ bottom: SP.L })
@@ -819,11 +851,11 @@ struct Index {
       LoadingProgress()
         .width(40)
         .height(40)
-        .color($r('app.color.brand_primary'))
+        .color(DT.BRAND_PRIMARY)
 
       Text(message)
         .fontSize(14)
-        .fontColor($r('app.color.text_secondary'))
+        .fontColor(this.isDarkMode() ? DT.DARK_TEXT_SECONDARY : DT.LIGHT_TEXT_SECONDARY)
     }
     .margin({ top: 50 })
   }
@@ -834,10 +866,13 @@ struct Index {
   ProcessesContent() {
     Scroll() {
       Column({ space: SP.L }) {
+        // Top safe area spacer
+        Column().height(this.topSafeArea)
+
         // Stats
         Row({ space: SP.M }) {
           this.StatCardV2({
-            icon: $r('sys.symbol.bolt.fill'),
+            icon: '⚡',
             value: this.processViewModel.processes.length,
             label: '总进程数',
             color: DT.IOS_BLUE,
@@ -845,7 +880,7 @@ struct Index {
           })
 
           this.StatCardV2({
-            icon: $r('sys.symbol.play.fill'),
+            icon: '▶️',
             value: this.processViewModel.getRunningCount(),
             label: '运行中',
             color: DT.IOS_GREEN,
@@ -853,7 +888,7 @@ struct Index {
           })
 
           this.StatCardV2({
-            icon: $r('sys.symbol.memorychip.fill'),
+            icon: '💾',
             value: this.processViewModel.getTotalMemoryUsage(),
             label: '内存 MB',
             color: DT.IOS_ORANGE,
@@ -868,14 +903,14 @@ struct Index {
           Text('进程列表')
             .fontSize(20)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.text_primary'))
+            .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
 
           Blank()
 
           Button() {
-            SymbolGlyph($r('sys.symbol.arrow.clockwise'))
+            Text('↻')
               .fontSize(16)
-              .fontColor([$r('app.color.brand_primary')])
+              .fontColor(DT.BRAND_PRIMARY)
           }
           .width(36)
           .height(36)
@@ -892,7 +927,7 @@ struct Index {
           this.LoadingState('加载中...')
         } else if (this.processViewModel.processes.length === 0) {
           this.EmptyState({
-            icon: $r('sys.symbol.bolt.slash.fill'),
+            icon: '🚫',
             title: '暂无进程',
             subtitle: '连接网关后将显示进程信息',
             actionText: '去连接',
@@ -904,7 +939,7 @@ struct Index {
           }, (process: Process) => process.id)
         }
 
-        Column().height(100)
+        Column().height(this.bottomSafeArea + 20)
       }
       .width('100%')
       .padding({ bottom: SP.L })
@@ -919,17 +954,20 @@ struct Index {
   AgentsContent() {
     Scroll() {
       Column({ space: SP.L }) {
+        // Top safe area spacer
+        Column().height(this.topSafeArea)
+
         // Gateway status banner
         if (!this.agentViewModel.currentGateway) {
           Row() {
-            SymbolGlyph($r('sys.symbol.exclamationmark.triangle.fill'))
+            Text('⚠️')
               .fontSize(16)
-              .fontColor([DT.IOS_ORANGE])
+              .fontColor(DT.IOS_ORANGE)
               .margin({ right: SP.S })
 
             Text('请先连接网关以查看 Agents')
               .fontSize(14)
-              .fontColor($r('app.color.text_primary'))
+              .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
           }
           .width('100%')
           .padding(SP.M)
@@ -939,20 +977,20 @@ struct Index {
           .onClick(() => this.selectedTabIndex = 1)
         } else {
           Row() {
-            SymbolGlyph($r('sys.symbol.checkmark.circle.fill'))
+            Text('✓')
               .fontSize(16)
-              .fontColor([DT.IOS_GREEN])
+              .fontColor(DT.IOS_GREEN)
               .margin({ right: SP.S })
 
             Text(`已连接: ${this.agentViewModel.currentGateway.name}`)
               .fontSize(14)
-              .fontColor($r('app.color.text_primary'))
+              .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
 
             Blank()
 
             Text(`${this.agentViewModel.currentGateway.host}:${this.agentViewModel.currentGateway.port}`)
               .fontSize(12)
-              .fontColor($r('app.color.text_secondary'))
+              .fontColor(this.isDarkMode() ? DT.DARK_TEXT_SECONDARY : DT.LIGHT_TEXT_SECONDARY)
           }
           .width('100%')
           .padding(SP.M)
@@ -964,7 +1002,7 @@ struct Index {
         // Stats
         Row({ space: SP.M }) {
           this.StatCardV2({
-            icon: $r('sys.symbol.cpu.fill'),
+            icon: '🤖',
             value: this.agentViewModel.agents.length,
             label: '总Agent数',
             color: DT.IOS_BLUE,
@@ -972,7 +1010,7 @@ struct Index {
           })
 
           this.StatCardV2({
-            icon: $r('sys.symbol.checkmark.circle.fill'),
+            icon: '✓',
             value: this.agentViewModel.getOnlineCount(),
             label: '在线Agent',
             color: DT.IOS_GREEN,
@@ -980,7 +1018,7 @@ struct Index {
           })
 
           this.StatCardV2({
-            icon: $r('sys.symbol.clock.fill'),
+            icon: '⏰',
             value: this.agentViewModel.getBusyCount(),
             label: '忙碌Agent',
             color: DT.IOS_ORANGE,
@@ -995,14 +1033,14 @@ struct Index {
           Text('OpenClaw Agents')
             .fontSize(20)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.text_primary'))
+            .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
 
           Blank()
 
           Button() {
-            SymbolGlyph($r('sys.symbol.arrow.clockwise'))
+            Text('↻')
               .fontSize(16)
-              .fontColor([$r('app.color.brand_primary')])
+              .fontColor(DT.BRAND_PRIMARY)
           }
           .width(36)
           .height(36)
@@ -1019,24 +1057,24 @@ struct Index {
           this.LoadingState('加载中...')
         } else if (this.agentViewModel.agents.length === 0) {
           Column({ space: SP.M }) {
-            SymbolGlyph($r('sys.symbol.cpu.fill'))
+            Text('🤖')
               .fontSize(48)
-              .fontColor([$r('app.color.text_tertiary')])
+              .fontColor(this.isDarkMode() ? DT.DARK_TEXT_TERTIARY : DT.LIGHT_TEXT_TERTIARY)
               .opacity(0.5)
 
             Text('暂无 Agent')
               .fontSize(16)
               .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_primary'))
+              .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
 
             if (this.agentViewModel.currentGateway) {
               Text(`已连接: ${this.agentViewModel.currentGateway.host}:${this.agentViewModel.currentGateway.port}`)
                 .fontSize(12)
-                .fontColor($r('app.color.text_secondary'))
+                .fontColor(this.isDarkMode() ? DT.DARK_TEXT_SECONDARY : DT.LIGHT_TEXT_SECONDARY)
             } else {
               Text('请先连接网关')
                 .fontSize(12)
-                .fontColor($r('app.color.text_secondary'))
+                .fontColor(this.isDarkMode() ? DT.DARK_TEXT_SECONDARY : DT.LIGHT_TEXT_SECONDARY)
             }
 
             Button('手动刷新')
@@ -1064,7 +1102,7 @@ struct Index {
           Text('Agent 数据管理')
             .fontSize(20)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.text_primary'))
+            .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
             .width('100%')
 
           Row({ space: SP.M }) {
@@ -1091,7 +1129,7 @@ struct Index {
         .width('100%')
         .padding(SP.L)
 
-        Column().height(100)
+        Column().height(this.bottomSafeArea + 20)
       }
       .width('100%')
       .padding({ bottom: SP.L })
@@ -1106,16 +1144,22 @@ struct Index {
   SettingsContent() {
     Scroll() {
       Column({ space: SP.L }) {
+        // Top safe area spacer
+        Column().height(this.topSafeArea)
+
         // Appearance Section
         this.SettingsSectionHeader('外观')
 
         Column() {
           this.SettingItemBuilder({
-            icon: $r('sys.symbol.paintpalette.fill'),
+            icon: '🎨',
             iconColor: DT.IOS_PURPLE,
             title: '深色模式',
             showToggle: true,
-            toggleValue: this.isDarkMode()
+            toggleValue: this.isDarkMode(),
+            onToggleChange: (value: boolean) => {
+              this.isDark = value;
+            }
           })
 
           Divider()
@@ -1124,7 +1168,7 @@ struct Index {
             .margin({ left: 52 })
 
           this.SettingItemBuilder({
-            icon: $r('sys.symbol.bell.fill'),
+            icon: '🔔',
             iconColor: DT.IOS_RED,
             title: '消息通知',
             showToggle: true,
@@ -1137,7 +1181,7 @@ struct Index {
             .margin({ left: 52 })
 
           this.SettingItemBuilder({
-            icon: $r('sys.symbol.arrow.clockwise'),
+            icon: '↻',
             iconColor: DT.IOS_BLUE,
             title: '自动刷新',
             showToggle: true,
@@ -1153,7 +1197,7 @@ struct Index {
 
         Column() {
           this.SettingItemBuilder({
-            icon: $r('sys.symbol.trash.fill'),
+            icon: '🗑️',
             iconColor: DT.IOS_ORANGE,
             title: '清除缓存',
             showToggle: false,
@@ -1166,7 +1210,7 @@ struct Index {
             .margin({ left: 52 })
 
           this.SettingItemBuilder({
-            icon: $r('sys.symbol.square.and.arrow.up.fill'),
+            icon: '📤',
             iconColor: DT.IOS_GREEN,
             title: '导出数据',
             showToggle: false,
@@ -1182,11 +1226,11 @@ struct Index {
 
         Column() {
           this.SettingItemBuilder({
-            icon: $r('sys.symbol.info.circle.fill'),
+            icon: 'ℹ️',
             iconColor: DT.IOS_BLUE,
             title: '关于应用',
             showToggle: false,
-            onClick: () => router.pushUrl({ url: 'pages/SettingsPage' })
+            onClick: () => router.pushUrl({ url: 'pages/AboutPage' })
           })
 
           Divider()
@@ -1195,7 +1239,7 @@ struct Index {
             .margin({ left: 52 })
 
           this.SettingItemBuilder({
-            icon: $r('sys.symbol.star.fill'),
+            icon: '⭐',
             iconColor: DT.IOS_YELLOW,
             title: '给个好评',
             showToggle: false,
@@ -1211,16 +1255,16 @@ struct Index {
           Text('Harmony Claw')
             .fontSize(20)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.text_primary'))
+            .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
           Text('Version 1.0.0')
             .fontSize(13)
-            .fontColor($r('app.color.text_secondary'))
+            .fontColor(this.isDarkMode() ? DT.DARK_TEXT_SECONDARY : DT.LIGHT_TEXT_SECONDARY)
         }
         .width('100%')
         .alignItems(HorizontalAlign.Center)
         .margin({ top: SP.XXL, bottom: SP.XXL })
 
-        Column().height(100)
+        Column().height(this.bottomSafeArea + 20)
       }
       .width('100%')
       .padding(SP.L)
@@ -1234,7 +1278,7 @@ struct Index {
     Text(title)
       .fontSize(13)
       .fontWeight(FontWeight.Medium)
-      .fontColor($r('app.color.text_secondary'))
+      .fontColor(this.isDarkMode() ? DT.DARK_TEXT_SECONDARY : DT.LIGHT_TEXT_SECONDARY)
       .width('100%')
       .padding({ left: SP.S, top: SP.M, bottom: SP.XS })
   }
@@ -1248,16 +1292,16 @@ struct Index {
           .height(32)
           .fill(params.iconColor + '15')
 
-        SymbolGlyph(params.icon)
+        Text(params.icon)
           .fontSize(16)
-          .fontColor([params.iconColor])
+          .fontColor(params.iconColor)
       }
       .width(32)
       .height(32)
 
       Text(params.title)
         .fontSize(16)
-        .fontColor($r('app.color.text_primary'))
+        .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
         .layoutWeight(1)
         .margin({ left: SP.M })
 
@@ -1266,10 +1310,15 @@ struct Index {
           .selectedColor(DT.IOS_GREEN)
           .width(51)
           .height(31)
+          .onChange((value: boolean) => {
+            if (params.onToggleChange) {
+              params.onToggleChange(value)
+            }
+          })
       } else {
-        SymbolGlyph($r('sys.symbol.chevron.right'))
+        Text('›')
           .fontSize(14)
-          .fontColor([$r('app.color.text_tertiary')])
+          .fontColor(this.isDarkMode() ? DT.DARK_TEXT_TERTIARY : DT.LIGHT_TEXT_TERTIARY)
       }
     }
     .width('100%')
@@ -1283,7 +1332,7 @@ struct Index {
   // ========== Tab Bar ==========
 
   @Builder
-  TabBarBuilder(icon: Resource, title: string, index: number) {
+  TabBarBuilder(icon: string, title: string, index: number) {
     Column({ space: 3 }) {
       Stack() {
         // Selected background
@@ -1293,12 +1342,12 @@ struct Index {
           .fill(this.isDarkMode() ? 'rgba(10, 132, 255, 0.20)' : 'rgba(0, 122, 255, 0.12)')
           .animation({ duration: 200, curve: Curve.EaseOut })
 
-        SymbolGlyph(icon)
+        Text(icon)
           .fontSize(this.selectedTabIndex === index ? 22 : 20)
-          .fontColor([
+          .fontColor(
             this.selectedTabIndex === index ? DT.IOS_BLUE :
             (this.isDarkMode() ? 'rgba(255, 255, 255, 0.55)' : 'rgba(0, 0, 0, 0.45)')
-          ])
+          )
           .fontWeight(this.selectedTabIndex === index ? FontWeight.Medium : FontWeight.Regular)
           .animation({ duration: 200, curve: Curve.EaseOut })
       }
@@ -1308,10 +1357,10 @@ struct Index {
 
       Text(title)
         .fontSize(10)
-        .fontColor([
+        .fontColor(
           this.selectedTabIndex === index ? DT.IOS_BLUE :
           (this.isDarkMode() ? 'rgba(255, 255, 255, 0.50)' : 'rgba(0, 0, 0, 0.40)')
-        ])
+        )
         .fontWeight(this.selectedTabIndex === index ? FontWeight.Medium : FontWeight.Regular)
         .animation({ duration: 200, curve: Curve.EaseOut })
     }
@@ -1329,27 +1378,27 @@ struct Index {
         TabContent() {
           this.DashboardContent()
         }
-        .tabBar(this.TabBarBuilder($r('sys.symbol.house.fill'), '首页', 0))
+        .tabBar(this.TabBarBuilder('🏠', '首页', 0))
 
         TabContent() {
           this.GatewaysContent()
         }
-        .tabBar(this.TabBarBuilder($r('sys.symbol.icloud'), '网关', 1))
+        .tabBar(this.TabBarBuilder('☁️', '网关', 1))
 
         TabContent() {
           this.ProcessesContent()
         }
-        .tabBar(this.TabBarBuilder($r('sys.symbol.bolt.fill'), '进程', 2))
+        .tabBar(this.TabBarBuilder('⚡', '进程', 2))
 
         TabContent() {
           this.AgentsContent()
         }
-        .tabBar(this.TabBarBuilder($r('sys.symbol.cpu.fill'), 'Agent', 3))
+        .tabBar(this.TabBarBuilder('🤖', 'Agent', 3))
 
         TabContent() {
           this.SettingsContent()
         }
-        .tabBar(this.TabBarBuilder($r('sys.symbol.gearshape'), '设置', 4))
+        .tabBar(this.TabBarBuilder('⚙️', '设置', 4))
       }
       .width('100%')
       .height('100%')
@@ -1358,43 +1407,43 @@ struct Index {
       .animationDuration(this.tabAnimationDuration)
       .animationCurve(this.tabAnimationCurve)
       .barWidth('100%')
-      .barHeight(64)
-      .barBackgroundBlurStyle(this.isDarkMode() ? BlurStyle.NONE : BlurStyle.Regular)
-      .barBackgroundColor(this.isDarkMode() ? '#000000' : 'rgba(255, 255, 255, 0.80)')
-      .barOverlap(true)
+      .barHeight(80)
+      .barBackgroundColor(this.isDarkMode() ? '#000000' : '#FFFFFF')
+      .barOverlap(false)
       .backgroundColor(this.isDarkMode() ? '#000000' : '#F2F2F7')
       .onChange((index: number) => {
         this.selectedTabIndex = index
       })
 
-      // Header
-      Row() {
-        Text('Harmony Claw')
-          .fontSize(20)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
-
-        Blank()
-
-        if (this.selectedTabIndex === 0 || this.selectedTabIndex === 3) {
-          Button() {
-            SymbolGlyph($r('sys.symbol.plus'))
-              .fontSize(22)
-              .fontColor([DT.IOS_BLUE])
-              .fontWeight(FontWeight.Medium)
-          }
-          .width(40)
-          .height(40)
-          .backgroundColor('transparent')
-          .onClick(() => router.pushUrl({ url: 'pages/AddGatewayPage' }))
+      // Floating Action Button (FAB) - bottom right
+      if (this.selectedTabIndex === 0 || this.selectedTabIndex === 3) {
+        Button() {
+          Text('+')
+            .fontSize(32)
+            .fontColor('#FFFFFF')
+            .fontWeight(FontWeight.Medium)
         }
+        .width(56)
+        .height(56)
+        .backgroundColor(DT.IOS_BLUE)
+        .borderRadius(28)
+        .shadow({
+          radius: 8,
+          color: 'rgba(0, 122, 255, 0.4)',
+          offsetX: 0,
+          offsetY: 4
+        })
+        .position({
+          x: '100%',
+          y: '100%'
+        })
+        .translate({
+          x: -72,
+          y: -120
+        })
+        .zIndex(100)
+        .onClick(() => router.pushUrl({ url: 'pages/AddGatewayPage' }))
       }
-      .width('100%')
-      .height(56)
-      .padding({ left: SP.L, right: SP.L })
-      .backgroundColor(this.getHeaderBgColor())
-      .backgroundBlurStyle(this.isDarkMode() ? BlurStyle.NONE : (this.headerOpacity > 0.5 ? BlurStyle.Thin : BlurStyle.NONE))
-      .zIndex(100)
     }
     .width('100%')
     .height('100%')

@@ -18,9 +18,26 @@ export default class EntryAbility extends UIAbility {
     hilog.info(0x0000, TAG, '%{public}s', 'Ability onDestroy');
   }
 
-  onWindowStageCreate(windowStage: window.WindowStage): void {
+  async onWindowStageCreate(windowStage: window.WindowStage): Promise<void> {
     // Main window is created, set main page for this ability
     hilog.info(0x0000, TAG, '%{public}s', 'Ability onWindowStageCreate');
+
+    // 获取主窗口并设置沉浸式
+    try {
+      const mainWindow = windowStage.getMainWindowSync();
+      // 设置全屏布局，内容延伸到状态栏和导航栏
+      await mainWindow.setWindowLayoutFullScreen(true);
+      // 设置状态栏和导航栏透明
+      await mainWindow.setWindowSystemBarProperties({
+        statusBarColor: '#00000000',
+        navigationBarColor: '#00000000',
+        statusBarContentColor: 'black',
+        navigationBarContentColor: 'black'
+      });
+      hilog.info(0x0000, TAG, 'Window immersive mode enabled');
+    } catch (err) {
+      hilog.error(0x0000, TAG, 'Failed to set window immersive: %{public}s', JSON.stringify(err));
+    }
 
     windowStage.loadContent('pages/Index', (err) => {
       if (err.code) {

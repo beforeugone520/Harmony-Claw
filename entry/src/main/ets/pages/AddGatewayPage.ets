@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI'
 import { Gateway } from '../models/Gateway'
 import { GatewayViewModel } from '../viewmodels/GatewayViewModel'
-import { Spacing as SP } from '../constants'
+import { DesignTokens as DT, Spacing as SP, Typography as TYP, Animation as ANI } from '../constants'
 import { HmButton, HmConfirmDialog, ToastManager } from '../components/common'
 import { getHttpService } from '../services/HttpService'
 
@@ -16,6 +16,11 @@ struct AddGatewayPage {
   @State testResult: string = ''
   @State testSuccess: boolean = false
   @State showConfirmDialog: boolean = false
+  @State isDark: boolean = false
+
+  // Safe area for immersive mode
+  @State topSafeArea: number = 37
+
   aboutToAppear() {
     this.viewModel.initialize().catch((e: Error) => {
       console.error(`[AddGatewayPage] Failed to initialize: ${JSON.stringify(e)}`)
@@ -108,48 +113,69 @@ struct AddGatewayPage {
     }
   }
 
-  build() {
-    Column({ space: SP.L }) {
-      // Title
-      Row() {
-        Text('添加网关')
-          .fontSize(20)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
-
-        Blank()
-
-        Button('X')
-          .width(36)
-          .height(36)
-          .backgroundColor('transparent')
-          .fontColor($r('app.color.text_secondary'))
-          .onClick(() => router.back())
+  @Builder
+  HeaderBuilder() {
+    Row() {
+      Button() {
+        Text('‹')
+          .fontSize(28)
+          .fontWeight(TYP.WEIGHT_MEDIUM)
+          .fontColor(DT.getTextPrimary(this.isDark))
       }
-      .width('100%')
-      .height(56)
-      .padding({ left: SP.L, right: SP.L })
-      .backgroundColor($r('app.color.background_primary'))
+      .width(44)
+      .height(44)
+      .backgroundColor('transparent')
+      .scale({ x: 1, y: 1 })
+      .animation(ANI.pressFeedbackFine())
+      .onClick(() => {
+        router.back()
+      })
+
+      Text('添加网关')
+        .fontSize(TYP.SIZE_H2)
+        .fontWeight(TYP.WEIGHT_MEDIUM)
+        .fontColor(DT.getTextPrimary(this.isDark))
+
+      Blank()
+        .width(44)
+    }
+    .width('100%')
+    .height(56)
+    .padding({ left: SP.S, right: SP.M })
+    .backgroundColor(DT.getBackgroundColor(this.isDark))
+  }
+
+  build() {
+    Column({ space: 0 }) {
+      // 顶部安全区域占位
+      Column()
+        .width('100%')
+        .height(this.topSafeArea)
+        .backgroundColor(DT.getBackgroundColor(this.isDark))
+
+      // Header
+      this.HeaderBuilder()
 
       // Form content
       Column({ space: SP.L }) {
         // Description
         Text('输入网关的 IP 地址和端口')
-          .fontSize(12)
-          .fontColor($r('app.color.text_secondary'))
+          .fontSize(TYP.SIZE_SMALL)
+          .fontColor(DT.getTextSecondary(this.isDark))
           .width('100%')
 
         // Gateway name
         Column({ space: SP.XS }) {
           Text('网关名称')
-            .fontSize(12)
-            .fontColor($r('app.color.text_secondary'))
+            .fontSize(TYP.SIZE_SMALL)
+            .fontColor(DT.getTextSecondary(this.isDark))
           TextInput({ placeholder: '自定义名称（可选）' })
-            .placeholderColor($r('app.color.text_tertiary'))
-            .fontSize(14)
+            .placeholderColor(DT.getTextSecondary(this.isDark))
+            .fontSize(TYP.SIZE_BODY)
+            .fontColor(DT.getTextPrimary(this.isDark))
             .width('100%')
             .height(48)
-            .backgroundColor($r('app.color.background_primary'))
+            .backgroundColor(DT.getSurfaceColor(this.isDark))
             .borderRadius(SP.RADIUS_M)
             .maxLength(50)
             .onChange((value: string) => { this.gatewayName = value })
@@ -160,14 +186,15 @@ struct AddGatewayPage {
         // IP address
         Column({ space: SP.XS }) {
           Text('IP 地址 *')
-            .fontSize(12)
-            .fontColor($r('app.color.text_secondary'))
+            .fontSize(TYP.SIZE_SMALL)
+            .fontColor(DT.getTextSecondary(this.isDark))
           TextInput({ placeholder: '例如：192.168.1.100' })
-            .placeholderColor($r('app.color.text_tertiary'))
-            .fontSize(14)
+            .placeholderColor(DT.getTextSecondary(this.isDark))
+            .fontSize(TYP.SIZE_BODY)
+            .fontColor(DT.getTextPrimary(this.isDark))
             .width('100%')
             .height(48)
-            .backgroundColor($r('app.color.background_primary'))
+            .backgroundColor(DT.getSurfaceColor(this.isDark))
             .borderRadius(SP.RADIUS_M)
             .maxLength(15)
             .onChange((value: string) => { this.gatewayIp = value })
@@ -178,14 +205,15 @@ struct AddGatewayPage {
         // Port
         Column({ space: SP.XS }) {
           Text('端口 *')
-            .fontSize(12)
-            .fontColor($r('app.color.text_secondary'))
+            .fontSize(TYP.SIZE_SMALL)
+            .fontColor(DT.getTextSecondary(this.isDark))
           TextInput({ placeholder: '默认 8333' })
-            .placeholderColor($r('app.color.text_tertiary'))
-            .fontSize(14)
+            .placeholderColor(DT.getTextSecondary(this.isDark))
+            .fontSize(TYP.SIZE_BODY)
+            .fontColor(DT.getTextPrimary(this.isDark))
             .width('100%')
             .height(48)
-            .backgroundColor($r('app.color.background_primary'))
+            .backgroundColor(DT.getSurfaceColor(this.isDark))
             .borderRadius(SP.RADIUS_M)
             .maxLength(5)
             .type(InputType.Number)
@@ -198,13 +226,12 @@ struct AddGatewayPage {
         if (this.testResult) {
           Row() {
             Text(this.testResult)
-              .fontSize(12)
-              .fontColor(this.testSuccess ? $r('app.color.success') : $r('app.color.error'))
+              .fontSize(TYP.SIZE_SMALL)
+              .fontColor(this.testSuccess ? DT.SUCCESS : DT.ERROR)
           }
           .width('100%')
           .padding(SP.M)
-          .backgroundColor(this.testSuccess ? $r('app.color.success') : $r('app.color.error'))
-          .opacity(0.1)
+          .backgroundColor(this.testSuccess ? DT.SUCCESS_BG : DT.ERROR_BG)
           .borderRadius(SP.RADIUS_S)
         }
 
@@ -212,13 +239,12 @@ struct AddGatewayPage {
         if (this.viewModel.errorMessage) {
           Row() {
             Text(this.viewModel.errorMessage)
-              .fontSize(12)
-              .fontColor($r('app.color.error'))
+              .fontSize(TYP.SIZE_SMALL)
+              .fontColor(DT.ERROR)
           }
           .width('100%')
           .padding(SP.M)
-          .backgroundColor($r('app.color.error'))
-          .opacity(0.1)
+          .backgroundColor(DT.ERROR_BG)
           .borderRadius(SP.RADIUS_S)
         }
 
@@ -247,21 +273,21 @@ struct AddGatewayPage {
         // Tips
         Column({ space: SP.S }) {
           Text('提示：')
-            .fontSize(12)
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('app.color.text_secondary'))
+            .fontSize(TYP.SIZE_SMALL)
+            .fontWeight(TYP.WEIGHT_MEDIUM)
+            .fontColor(DT.getTextSecondary(this.isDark))
 
           Text('• 确保网关服务已启动')
-            .fontSize(12)
-            .fontColor($r('app.color.text_tertiary'))
+            .fontSize(TYP.SIZE_SMALL)
+            .fontColor(DT.getTextTertiary(this.isDark))
 
           Text('• 手机和网关在同一个局域网')
-            .fontSize(12)
-            .fontColor($r('app.color.text_tertiary'))
+            .fontSize(TYP.SIZE_SMALL)
+            .fontColor(DT.getTextTertiary(this.isDark))
 
           Text('• 默认端口为 8333')
-            .fontSize(12)
-            .fontColor($r('app.color.text_tertiary'))
+            .fontSize(TYP.SIZE_SMALL)
+            .fontColor(DT.getTextTertiary(this.isDark))
         }
         .width('100%')
         .alignItems(HorizontalAlign.Start)
@@ -269,7 +295,7 @@ struct AddGatewayPage {
       .width('100%')
       .layoutWeight(1)
       .padding(SP.L)
-      .backgroundColor($r('app.color.background_secondary'))
+      .backgroundColor(DT.getBackgroundColor(this.isDark))
 
       // Confirm dialog
       if (this.showConfirmDialog) {
@@ -290,12 +316,19 @@ struct AddGatewayPage {
         }
         .width('100%')
         .height('100%')
-        .backgroundColor($r('app.color.overlay_light'))
+        .backgroundColor(DT.OVERLAY_LIGHT)
         .position({ x: 0, y: 0 })
       }
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.background_secondary'))
+    .backgroundColor(DT.getBackgroundColor(this.isDark))
+  }
+
+  pageTransition() {
+    PageTransitionEnter({ duration: 300, curve: Curve.EaseOut })
+      .slide(SlideEffect.Right)
+    PageTransitionExit({ duration: 200, curve: Curve.EaseIn })
+      .slide(SlideEffect.Right)
   }
 }

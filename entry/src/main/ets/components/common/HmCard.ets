@@ -8,14 +8,33 @@ import { DesignTokens as DT, Spacing as SP, Typography as TYP } from '../../cons
 export struct HmCard {
   @Prop cardPadding: number = SP.CARD_PADDING
   @Prop cardBgColor: ResourceColor = DT.LIGHT_BG_PRIMARY
-  @Prop cardBorderRadius: number = SP.RADIUS_L
+  @Prop cardBorderRadius: number = SP.RADIUS_L  // 统一16px圆角
   @Prop cardClickable: boolean = false
+  @Prop shadowLevel: 'resting' | 'hovered' | 'elevated' = 'resting'
   onCardClick?: () => void
   @BuilderParam cardContent: () => void = HmCard.emptyBuilder
+
+  // 内部状态
+  @State isPressed: boolean = false
+  @State isHovered: boolean = false
 
   @Builder
   static emptyBuilder() {
     // 默认空内容
+  }
+
+  // 根据层级获取阴影
+  private getShadow(): ShadowOptions {
+    const level = this.isHovered ? 'hovered' : this.shadowLevel
+    switch (level) {
+      case 'hovered':
+        return DT.SHADOW_HOVERED
+      case 'elevated':
+        return DT.SHADOW_ELEVATED
+      case 'resting':
+      default:
+        return DT.SHADOW_RESTING
+    }
   }
 
   build() {
@@ -26,11 +45,26 @@ export struct HmCard {
     .backgroundColor(this.cardBgColor)
     .borderRadius(this.cardBorderRadius)
     .padding(this.cardPadding)
-    .shadow({
-      radius: 8,
-      color: DT.SHADOW_LIGHT,
-      offsetX: 0,
-      offsetY: 2
+    .shadow(this.getShadow())
+    .scale({
+      x: this.isPressed ? 0.97 : 1.0,
+      y: this.isPressed ? 0.97 : 1.0
+    })
+    .animation({
+      duration: 150,
+      curve: Curve.EaseOut
+    })
+    .onHover((isHover: boolean) => {
+      this.isHovered = isHover
+    })
+    .onTouch((event: TouchEvent) => {
+      if (this.cardClickable) {
+        if (event.type === TouchType.Down) {
+          this.isPressed = true
+        } else if (event.type === TouchType.Up || event.type === TouchType.Cancel) {
+          this.isPressed = false
+        }
+      }
     })
     .onClick(() => {
       if (this.cardClickable && this.onCardClick) {

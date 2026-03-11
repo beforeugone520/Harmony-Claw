@@ -1,21 +1,33 @@
 import { Message, MessageType } from '../../models/Message';
 import { Spacing as SP } from '../../constants';
 import { DateUtils } from '../../utils/DateUtils';
+import { DesignTokens as DT } from '../../constants/DesignTokens';
 
 @Component
 export struct MessageBubble {
   @Prop message: Message;
+  @Prop isDark: boolean = false;
 
   private isUserMessage(): boolean {
     return this.message?.sender === 'user';
   }
 
-  private getBubbleColor(): ResourceColor {
-    return this.isUserMessage() ? $r('app.color.brand_primary') : $r('app.color.background_tertiary');
+  private getBubbleColor(): string {
+    if (this.isUserMessage()) {
+      return DT.BRAND_PRIMARY;
+    }
+    return this.isDark ? DT.DARK_BG_TERTIARY : DT.LIGHT_BG_TERTIARY;
   }
 
-  private getTextColor(): ResourceColor {
-    return this.isUserMessage() ? $r('app.color.text_inverse') : $r('app.color.text_primary');
+  private getTextColor(): string {
+    if (this.isUserMessage()) {
+      return '#FFFFFF';
+    }
+    return this.isDark ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY;
+  }
+
+  private getSecondaryTextColor(): string {
+    return this.isDark ? DT.DARK_TEXT_TERTIARY : DT.LIGHT_TEXT_TERTIARY;
   }
 
   build() {
@@ -26,11 +38,11 @@ export struct MessageBubble {
           Text('AI')
             .fontSize(12)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.text_inverse'))
+            .fontColor('#FFFFFF')
         }
         .width(36)
         .height(36)
-        .backgroundColor($r('app.color.brand_secondary'))
+        .backgroundColor(DT.BRAND_SECONDARY)
         .borderRadius(18)
         .justifyContent(FlexAlign.Center)
         .margin({ right: SP.S })
@@ -46,7 +58,7 @@ export struct MessageBubble {
         // Time
         Text(this.message?.timestamp ? DateUtils.formatTime(this.message.timestamp) : '')
           .fontSize(10)
-          .fontColor(this.isUserMessage() ? 'rgba(255,255,255,0.7)' : $r('app.color.text_tertiary'))
+          .fontColor(this.isUserMessage() ? 'rgba(255,255,255,0.7)' : this.getSecondaryTextColor())
       }
       .alignItems(this.isUserMessage() ? HorizontalAlign.End : HorizontalAlign.Start)
       .padding(SP.M)
@@ -64,11 +76,11 @@ export struct MessageBubble {
           Text('U')
             .fontSize(12)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.text_inverse'))
+            .fontColor('#FFFFFF')
         }
         .width(36)
         .height(36)
-        .backgroundColor($r('app.color.brand_primary'))
+        .backgroundColor(DT.BRAND_PRIMARY)
         .borderRadius(18)
         .justifyContent(FlexAlign.Center)
         .margin({ left: SP.S })

@@ -61,6 +61,39 @@ export class Animation {
       curve: Curve.EaseOut
     }
   }
+
+  // ========== 微交互动画 ==========
+  // 更细腻的按压反馈 (从0.95改为0.97)
+  static pressFeedbackFine(): AnimateParam {
+    return {
+      duration: Animation.DURATION_FAST,
+      curve: Curve.EaseOut
+    }
+  }
+
+  // 骨架屏闪光动画
+  static shimmer(): AnimateParam {
+    return {
+      duration: 1500,
+      curve: Curve.Linear
+    }
+  }
+
+  // 下拉刷新动画
+  static pullToRefresh(): AnimateParam {
+    return {
+      duration: Animation.DURATION_MEDIUM,
+      curve: Curve.EaseOut
+    }
+  }
+
+  // 页面切换共享元素过渡
+  static sharedElementTransition(): AnimateParam {
+    return {
+      duration: Animation.DURATION_MEDIUM,
+      curve: Curve.EaseInOut
+    }
+  }
 }
 
 // 导出别名方便使用

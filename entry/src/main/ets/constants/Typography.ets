@@ -8,27 +8,34 @@ export class Typography {
   static readonly FONT_FAMILY_NORMAL = 'HarmonyOS Sans'
   static readonly FONT_FAMILY_MEDIUM = 'HarmonyOS Sans Medium'
   static readonly FONT_FAMILY_BOLD = 'HarmonyOS Sans Bold'
+  // 中文优化字体
+  static readonly FONT_FAMILY_SC = 'HarmonyOS Sans SC'
+  static readonly FONT_FAMILY_SC_MEDIUM = 'HarmonyOS Sans SC Medium'
+  static readonly FONT_FAMILY_SC_BOLD = 'HarmonyOS Sans SC Bold'
 
-  // ========== 字号层级 ==========
+  // ========== 字号层级 (3倍跳跃) ==========
+  // 超大标题 - 特殊展示
+  static readonly SIZE_H0 = 32
   // 大标题 - 导航栏标题
-  static readonly SIZE_H1 = 24
+  static readonly SIZE_H1 = 28
   // 标题 - 页面标题
-  static readonly SIZE_H2 = 20
+  static readonly SIZE_H2 = 22
   // 小标题 - 卡片标题
   static readonly SIZE_H3 = 17
   // 正文 - 主要文字
   static readonly SIZE_BODY = 16
   // 辅助文字 - 次要信息
-  static readonly SIZE_CAPTION = 14
+  static readonly SIZE_CAPTION = 13
   // 小字 - 标签、时间
-  static readonly SIZE_SMALL = 12
+  static readonly SIZE_SMALL = 11
   // 超小字 - 角标
   static readonly SIZE_XSMALL = 10
 
-  // ========== 字重 ==========
+  // ========== 字重 (极端值对比) ==========
   static readonly WEIGHT_NORMAL = FontWeight.Normal  // 400
   static readonly WEIGHT_MEDIUM = FontWeight.Medium  // 500
   static readonly WEIGHT_BOLD = FontWeight.Bold      // 700
+  static readonly WEIGHT_EXTRA_BOLD = FontWeight.Bolder  // 800
 
   // ========== 行高 ==========
   static readonly LINE_HEIGHT_TIGHT = 1.2   // 紧凑（标题）
@@ -41,7 +48,7 @@ export class Typography {
     return {
       fontSize: Typography.SIZE_H1,
       fontWeight: Typography.WEIGHT_BOLD,
-      fontFamily: Typography.FONT_FAMILY_BOLD
+      fontFamily: Typography.FONT_FAMILY_SC_BOLD
     }
   }
 
@@ -50,7 +57,7 @@ export class Typography {
     return {
       fontSize: Typography.SIZE_H2,
       fontWeight: Typography.WEIGHT_BOLD,
-      fontFamily: Typography.FONT_FAMILY_BOLD
+      fontFamily: Typography.FONT_FAMILY_SC_BOLD
     }
   }
 
@@ -59,7 +66,7 @@ export class Typography {
     return {
       fontSize: Typography.SIZE_H3,
       fontWeight: Typography.WEIGHT_MEDIUM,
-      fontFamily: Typography.FONT_FAMILY_MEDIUM
+      fontFamily: Typography.FONT_FAMILY_SC_MEDIUM
     }
   }
 

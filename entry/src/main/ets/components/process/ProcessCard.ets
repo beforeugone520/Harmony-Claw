@@ -14,18 +14,18 @@ export struct ProcessCard {
     }
   }
 
-  private getStatusColor(): ResourceColor {
+  private getStatusColor(): string {
     switch (this.process.status) {
       case ProcessStatus.RUNNING:
         return DT.IOS_GREEN;
       case ProcessStatus.STOPPED:
-        return $r('app.color.text_tertiary');
+        return this.isDarkMode() ? DT.DARK_TEXT_TERTIARY : DT.LIGHT_TEXT_TERTIARY;
       case ProcessStatus.ERROR:
         return DT.IOS_RED;
       case ProcessStatus.PENDING:
         return DT.IOS_ORANGE;
       default:
-        return $r('app.color.text_tertiary');
+        return this.isDarkMode() ? DT.DARK_TEXT_TERTIARY : DT.LIGHT_TEXT_TERTIARY;
     }
   }
 
@@ -54,9 +54,9 @@ export struct ProcessCard {
             .height(48)
             .fill(this.isDarkMode() ? '#2C2C2E' : '#E5E5EA')
 
-          SymbolGlyph($r('sys.symbol.bolt.fill'))
+          Text('⚡')
             .fontSize(22)
-            .fontColor([DT.IOS_BLUE])
+            .fontColor(DT.IOS_BLUE)
         }
         .width(48)
         .height(48)
@@ -66,13 +66,13 @@ export struct ProcessCard {
           Text(this.process.name)
             .fontSize(15)
             .fontWeight(FontWeight.Medium)
-            .fontColor($r('app.color.text_primary'))
+            .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
 
           Text(`PID: ${this.process.pid}`)
             .fontSize(12)
-            .fontColor($r('app.color.text_secondary'))
+            .fontColor(this.isDarkMode() ? DT.DARK_TEXT_SECONDARY : DT.LIGHT_TEXT_SECONDARY)
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Start)
@@ -101,11 +101,11 @@ export struct ProcessCard {
         Column({ space: SP.XS }) {
           Text('内存')
             .fontSize(11)
-            .fontColor($r('app.color.text_tertiary'))
+            .fontColor(this.isDarkMode() ? DT.DARK_TEXT_TERTIARY : DT.LIGHT_TEXT_TERTIARY)
 
           Text(`${this.process.memory.toFixed(0)} MB`)
             .fontSize(14)
-            .fontColor($r('app.color.text_primary'))
+            .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
             .fontWeight(FontWeight.Medium)
         }
         .layoutWeight(1)
@@ -113,11 +113,11 @@ export struct ProcessCard {
         Column({ space: SP.XS }) {
           Text('CPU')
             .fontSize(11)
-            .fontColor($r('app.color.text_tertiary'))
+            .fontColor(this.isDarkMode() ? DT.DARK_TEXT_TERTIARY : DT.LIGHT_TEXT_TERTIARY)
 
           Text(`${this.process.cpu.toFixed(1)}%`)
             .fontSize(14)
-            .fontColor($r('app.color.text_primary'))
+            .fontColor(this.isDarkMode() ? DT.DARK_TEXT_PRIMARY : DT.LIGHT_TEXT_PRIMARY)
             .fontWeight(FontWeight.Medium)
         }
         .layoutWeight(1)

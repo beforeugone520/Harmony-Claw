@@ -3,6 +3,28 @@
  * iOS-style Design System for Harmony Claw
  */
 
+// ========== 接口定义 ==========
+interface ShadowOptions {
+  radius: number
+  color: string
+  offsetX: number
+  offsetY: number
+}
+
+interface StatusColorInfo {
+  color: string
+  bgColor: string
+}
+
+interface StatusColors {
+  online: StatusColorInfo
+  offline: StatusColorInfo
+  busy: StatusColorInfo
+  error: StatusColorInfo
+  warning: StatusColorInfo
+  info: StatusColorInfo
+}
+
 export class DesignTokens {
   // ========== iOS Brand Colors ==========
   static readonly BRAND_PRIMARY = '#007AFF'      // iOS Blue
@@ -89,10 +111,68 @@ export class DesignTokens {
   static readonly STATUS_BUSY = '#FF9500'
   static readonly STATUS_ERROR = '#FF3B30'
 
+  // ========== 语义化状态色 (带背景) ==========
+  static readonly STATUS: StatusColors = {
+    online: {
+      color: '#34C759',
+      bgColor: '#E8F8F0'
+    },
+    offline: {
+      color: '#8E8E93',
+      bgColor: '#F2F2F7'
+    },
+    busy: {
+      color: '#FF9500',
+      bgColor: '#FFF5E6'
+    },
+    error: {
+      color: '#FF3B30',
+      bgColor: '#FFEBEB'
+    },
+    warning: {
+      color: '#FF9500',
+      bgColor: '#FFF5E6'
+    },
+    info: {
+      color: '#5856D6',
+      bgColor: '#F0F0FF'
+    }
+  }
+
   // ========== Shadows (Light Mode Only) ==========
   static readonly SHADOW_LIGHT = 'rgba(0, 0, 0, 0.05)'
   static readonly SHADOW_MEDIUM = 'rgba(0, 0, 0, 0.08)'
   static readonly SHADOW_HEAVY = 'rgba(0, 0, 0, 0.12)'
+
+  // ========== 分层阴影系统 (三级) ==========
+  // 静止态 - 卡片默认状态
+  static readonly SHADOW_RESTING: ShadowOptions = {
+    radius: 4,
+    color: 'rgba(0, 0, 0, 0.04)',
+    offsetX: 0,
+    offsetY: 1
+  }
+  // 悬浮态 - 鼠标悬停/轻触
+  static readonly SHADOW_HOVERED: ShadowOptions = {
+    radius: 8,
+    color: 'rgba(0, 0, 0, 0.08)',
+    offsetX: 0,
+    offsetY: 4
+  }
+  // 浮动态 - 拖拽/高亮
+  static readonly SHADOW_ELEVATED: ShadowOptions = {
+    radius: 16,
+    color: 'rgba(0, 0, 0, 0.12)',
+    offsetX: 0,
+    offsetY: 8
+  }
+
+  // ========== 强调色渐变 ==========
+  static readonly GRADIENT_PRIMARY = ['#007AFF', '#5856D6']  // iOS Blue -> Indigo
+  static readonly GRADIENT_ACCENT = ['#5856D6', '#AF52DE']   // Indigo -> Purple
+  static readonly GRADIENT_SUCCESS = ['#34C759', '#30D158']  // Green gradient
+  static readonly GRADIENT_WARNING = ['#FF9500', '#FF6B00']  // Orange gradient
+  static readonly GRADIENT_ERROR = ['#FF3B30', '#FF6B6B']    // Red gradient
 
   // ========== Overlays ==========
   static readonly OVERLAY_LIGHT = 'rgba(0, 0, 0, 0.40)'
@@ -117,6 +197,14 @@ export class DesignTokens {
 
   static getTextSecondary(isDark: boolean): string {
     return isDark ? DesignTokens.DARK_TEXT_SECONDARY : DesignTokens.LIGHT_TEXT_SECONDARY
+  }
+
+  static getTextTertiary(isDark: boolean): string {
+    return isDark ? DesignTokens.DARK_TEXT_TERTIARY : DesignTokens.LIGHT_TEXT_TERTIARY
+  }
+
+  static getBorderColor(isDark: boolean): string {
+    return isDark ? DesignTokens.DARK_BORDER : DesignTokens.LIGHT_BORDER
   }
 }
 

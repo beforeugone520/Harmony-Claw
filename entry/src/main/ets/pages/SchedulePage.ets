@@ -1,13 +1,17 @@
 /**
  * Schedule Page
- * 日程管理页面
+ * 日程管理页面 - 优化版
+ * 遵循主页设计系统规范
  */
 
 import { router } from '@kit.ArkUI';
-import { Spacing as SP } from '../constants';
+import { DesignTokens as DT, Spacing as SP, Typography as TYP, Animation as ANI } from '../constants';
 import { ScheduleViewModel } from '../viewmodels/ScheduleViewModel';
 import { ScheduleEvent, CalendarDay, CalendarWeek, CalendarMonth, EVENT_CATEGORIES } from '../models/ScheduleModels';
 import { getCalendarSyncService } from '../services/CalendarSyncService';
+import { LoadingState } from '../components/LoadingState';
+import { EmptyState } from '../components/EmptyState';
+import { HmCard } from '../components/common/HmCard';
 
 @Entry
 @Component
@@ -15,12 +19,17 @@ struct SchedulePage {
   @State viewModel: ScheduleViewModel = new ScheduleViewModel();
   @State currentMonth: number = new Date().getMonth();
   @State currentYear: number = new Date().getFullYear();
-  @State selectedDate: string = this.formatLocalDate(new Date());
+  @State selectedDate: string = '';
   @State isSyncing: boolean = false;
   @State syncMessage: string = '';
+  @State isDark: boolean = false;
+
+  // Safe area for immersive mode
+  @State topSafeArea: number = 37  // 顶部状态栏高度
 
   private calendarSyncService = getCalendarSyncService();
   private weekdays: string[] = ['日', '一', '二', '三', '四', '五', '六'];
+  private syncMessageTimer: number = -1;
 
   private formatLocalDate(date: Date): string {
     const year = date.getFullYear();
@@ -28,16 +37,26 @@ struct SchedulePage {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
+
   private parseDateString(dateStr: string): Date {
     const parts = dateStr.split('-').map(Number);
-    const year = parts[0];
-    const month = parts[1];
-    const day = parts[2];
-    return new Date(year, month - 1, day);
+    return new Date(parts[0], parts[1] - 1, parts[2]);
   }
 
   aboutToAppear() {
+    this.selectedDate = this.formatLocalDate(new Date());
     this.viewModel.loadData();
+  }
+
+  onPageShow() {
+    this.viewModel.loadData();
+  }
+
+  aboutToDisappear() {
+    if (this.syncMessageTimer !== -1) {
+      clearTimeout(this.syncMessageTimer);
+      this.syncMessageTimer = -1;
+    }
   }
 
   private previousMonth() {
@@ -59,10 +78,15 @@ struct SchedulePage {
   }
 
   private async syncToCalendar() {
+    if (this.syncMessageTimer !== -1) {
+      clearTimeout(this.syncMessageTimer);
+      this.syncMessageTimer = -1;
+    }
+
     const unsynced = this.viewModel.getUnsyncedEvents();
     if (unsynced.length === 0) {
       this.syncMessage = '没有需要同步的日程';
-      setTimeout(() => this.syncMessage = '', 2000);
+      this.syncMessageTimer = setTimeout(() => this.syncMessage = '', 2000);
       return;
     }
 
@@ -76,98 +100,97 @@ struct SchedulePage {
       this.syncMessage = '同步失败';
     } finally {
       this.isSyncing = false;
-      setTimeout(() => this.syncMessage = '', 3000);
+      this.syncMessageTimer = setTimeout(() => this.syncMessage = '', 3000);
     }
   }
 
   @Builder
   EventItem(event: ScheduleEvent) {
-    Row({ space: SP.M }) {
-      // Time indicator
-      Column({ space: SP.XS }) {
-        Text(this.viewModel.formatTime(event.startTime))
-          .fontSize(12)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.text_primary'))
+    HmCard({
+      cardPadding: SP.M,
+      cardBgColor: DT.getSurfaceColor(this.isDark),
+      cardBorderRadius: SP.RADIUS_M,
+      cardClickable: true,
+      shadowLevel: 'resting'
+    }) {
+      Row({ space: SP.M }) {
+        Column({ space: SP.XS }) {
+          Text(this.viewModel.formatTime(event.startTime))
+            .fontSize(TYP.SIZE_CAPTION)
+            .fontWeight(TYP.WEIGHT_MEDIUM)
+            .fontColor(DT.getTextPrimary(this.isDark))
 
-        Text(this.viewModel.formatDuration(event.startTime, event.endTime))
-          .fontSize(10)
-          .fontColor($r('app.color.text_tertiary'))
-      }
-      .width(50)
-      .alignItems(HorizontalAlign.Start)
-
-      // Category indicator
-      Column() {
-        Text(this.viewModel.getCategoryIcon(event.category))
-          .fontSize(20)
-      }
-      .width(40)
-      .height(40)
-      .backgroundColor(this.viewModel.getCategoryColor(event.category) + '20')
-      .borderRadius(SP.RADIUS_S)
-      .justifyContent(FlexAlign.Center)
-
-      // Event info
-      Column({ space: SP.XS }) {
-        Text(event.title)
-          .fontSize(14)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.text_primary'))
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-
-        if (event.location) {
-          Row({ space: SP.XS }) {
-            Text('📍')
-              .fontSize(10)
-              .fontColor($r('app.color.text_tertiary'))
-
-            Text(event.location)
-              .fontSize(10)
-              .fontColor($r('app.color.text_tertiary'))
-          }
+          Text(this.viewModel.formatDuration(event.startTime, event.endTime))
+            .fontSize(TYP.SIZE_SMALL)
+            .fontColor(DT.getTextSecondary(this.isDark))
         }
+        .width(50)
+        .alignItems(HorizontalAlign.Start)
 
-        if (event.description) {
-          Text(event.description)
-            .fontSize(10)
-            .fontColor($r('app.color.text_secondary'))
+        Column() {
+          Text(this.viewModel.getCategoryIcon(event.category))
+            .fontSize(20)
+        }
+        .width(40)
+        .height(40)
+        .backgroundColor(this.viewModel.getCategoryColor(event.category) + '20')
+        .borderRadius(SP.RADIUS_M)
+        .justifyContent(FlexAlign.Center)
+
+        Column({ space: SP.XS }) {
+          Text(event.title)
+            .fontSize(TYP.SIZE_BODY)
+            .fontWeight(TYP.WEIGHT_MEDIUM)
+            .fontColor(DT.getTextPrimary(this.isDark))
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
+
+          if (event.location) {
+            Row({ space: SP.XS }) {
+              Text('📍')
+                .fontSize(TYP.SIZE_SMALL)
+                .fontColor(DT.getTextSecondary(this.isDark))
+              Text(event.location)
+                .fontSize(TYP.SIZE_SMALL)
+                .fontColor(DT.getTextSecondary(this.isDark))
+            }
+          }
+
+          if (event.description) {
+            Text(event.description)
+              .fontSize(TYP.SIZE_SMALL)
+              .fontColor(DT.getTextSecondary(this.isDark))
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+          }
+        }
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+
+        if (event.syncedToCalendar) {
+          Text('✓')
+            .fontSize(16)
+            .fontColor(DT.SUCCESS)
+        } else {
+          Text('⏰')
+            .fontSize(16)
+            .fontColor(DT.getTextSecondary(this.isDark))
         }
       }
-      .layoutWeight(1)
-      .alignItems(HorizontalAlign.Start)
-
-      // Sync status
-      if (event.syncedToCalendar) {
-        SymbolGlyph($r('sys.symbol.checkmark_circle_fill'))
-          .fontSize(16)
-          .fontColor(['#4ECDC4'])
-      } else {
-        SymbolGlyph($r('sys.symbol.clock'))
-          .fontSize(16)
-          .fontColor([$r('app.color.text_tertiary')])
-      }
+      .width('100%')
     }
-    .width('100%')
-    .padding(SP.M)
-    .backgroundColor($r('app.color.background_primary'))
-    .borderRadius(SP.RADIUS_M)
   }
 
   @Builder
   CalendarDayCell(day: CalendarDay) {
     Column({ space: 2 }) {
       Text(day.dayOfMonth.toString())
-        .fontSize(14)
-        .fontWeight(day.isToday ? FontWeight.Bold : FontWeight.Regular)
+        .fontSize(TYP.SIZE_BODY)
+        .fontWeight(day.isToday ? TYP.WEIGHT_BOLD : TYP.WEIGHT_NORMAL)
         .fontColor(day.isCurrentMonth
-          ? (day.isToday ? $r('app.color.brand_primary') : $r('app.color.text_primary'))
-          : $r('app.color.text_tertiary'))
+          ? (day.isToday ? DT.BRAND_PRIMARY : DT.getTextPrimary(this.isDark))
+          : DT.getTextSecondary(this.isDark))
 
-      // Event dots
       if (day.events.length > 0) {
         Row({ space: 2 }) {
           ForEach(day.events.slice(0, 3), (event: ScheduleEvent) => {
@@ -185,10 +208,12 @@ struct SchedulePage {
     .layoutWeight(1)
     .height(50)
     .backgroundColor(this.selectedDate === day.date
-      ? $r('app.color.brand_primary') + '15'
-      : (day.isToday ? $r('app.color.brand_primary') + '08' : 'transparent'))
+      ? DT.BRAND_PRIMARY + '15'
+      : (day.isToday ? DT.BRAND_PRIMARY + '08' : 'transparent'))
     .borderRadius(SP.RADIUS_S)
     .justifyContent(FlexAlign.Center)
+    .scale({ x: 1, y: 1 })
+    .animation(ANI.pressFeedbackFine())
     .onClick(() => {
       this.selectedDate = day.date;
     })
@@ -197,36 +222,46 @@ struct SchedulePage {
   build() {
     Stack({ alignContent: Alignment.TopStart }) {
       Column({ space: 0 }) {
-        // Header
+        // 顶部安全区域占位
+        Column()
+          .width('100%')
+          .height(this.topSafeArea)
+          .backgroundColor(DT.getBackgroundColor(this.isDark))
+
         Row() {
           Button() {
-            SymbolGlyph($r('sys.symbol.chevron_left'))
-              .fontSize(24)
-              .fontColor([$r('app.color.text_primary')])
+            Text('‹')
+              .fontSize(28)
+              .fontWeight(TYP.WEIGHT_MEDIUM)
+              .fontColor(DT.getTextPrimary(this.isDark))
           }
-          .width(40)
-          .height(40)
+          .width(44)
+          .height(44)
           .backgroundColor('transparent')
+          .scale({ x: 1, y: 1 })
+          .animation(ANI.pressFeedbackFine())
           .onClick(() => {
             router.back();
           })
 
           Text('日程管理')
-            .fontSize(18)
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('app.color.text_primary'))
+            .fontSize(TYP.SIZE_H2)
+            .fontWeight(TYP.WEIGHT_MEDIUM)
+            .fontColor(DT.getTextPrimary(this.isDark))
 
           Blank()
 
           Button() {
-            SymbolGlyph($r('sys.symbol.arrow_clockwise'))
-              .fontSize(20)
-              .fontColor([$r('app.color.brand_primary')])
+            Text('↻')
+              .fontSize(22)
+              .fontColor(DT.BRAND_PRIMARY)
           }
-          .width(40)
-          .height(40)
+          .width(44)
+          .height(44)
           .backgroundColor('transparent')
           .enabled(!this.viewModel.isLoading)
+          .scale({ x: 1, y: 1 })
+          .animation(ANI.pressFeedbackFine())
           .onClick(() => {
             this.viewModel.loadData();
           })
@@ -234,101 +269,100 @@ struct SchedulePage {
         .width('100%')
         .height(56)
         .padding({ left: SP.S, right: SP.M })
+        .backgroundColor(DT.getBackgroundColor(this.isDark))
 
         if (this.viewModel.isLoading) {
-          Column({ space: SP.M }) {
-            LoadingProgress()
-              .width(40)
-              .height(40)
-              .color($r('app.color.brand_primary'))
-
-            Text('加载中...')
-              .fontSize(14)
-              .fontColor($r('app.color.text_secondary'))
-          }
-          .width('100%')
-          .layoutWeight(1)
-          .justifyContent(FlexAlign.Center)
+          LoadingState({
+            message: '加载中...',
+            mode: 'skeleton-card'
+          })
+            .layoutWeight(1)
         } else {
           Scroll() {
             Column({ space: SP.L }) {
-              // Calendar Section
-              Column({ space: SP.M }) {
-                // Calendar header
-                Row() {
-                  Button() {
-                    SymbolGlyph($r('sys.symbol.chevron_left'))
-                      .fontSize(16)
-                      .fontColor([$r('app.color.text_secondary')])
-                  }
-                  .width(32)
-                  .height(32)
-                  .backgroundColor('transparent')
-                  .onClick(() => this.previousMonth())
-
-                  Text(`${this.currentYear}年${this.currentMonth + 1}月`)
-                    .fontSize(16)
-                    .fontWeight(FontWeight.Medium)
-                    .fontColor($r('app.color.text_primary'))
-
-                  Button() {
-                    SymbolGlyph($r('sys.symbol.chevron_right'))
-                      .fontSize(16)
-                      .fontColor([$r('app.color.text_secondary')])
-                  }
-                  .width(32)
-                  .height(32)
-                  .backgroundColor('transparent')
-                  .onClick(() => this.nextMonth())
-                }
-                .width('100%')
-                .justifyContent(FlexAlign.SpaceBetween)
-
-                // Weekday headers
-                Row({ space: 0 }) {
-                  ForEach(this.weekdays, (day: string) => {
-                    Text(day)
-                      .fontSize(12)
-                      .fontColor($r('app.color.text_secondary'))
-                      .width('100%')
-                      .textAlign(TextAlign.Center)
-                  }, (day: string) => day)
-                }
-                .width('100%')
-
-                // Calendar grid
-                Column({ space: 0 }) {
-                  ForEach(this.viewModel.generateCalendarMonth(this.currentYear, this.currentMonth).weeks,
-                    (week: CalendarWeek, weekIndex: number) => {
-                    Row({ space: 0 }) {
-                      ForEach(week.days, (day: CalendarDay) => {
-                        this.CalendarDayCell(day)
-                      }, (day: CalendarDay) => day.date)
+              HmCard({
+                cardPadding: SP.M,
+                cardBgColor: DT.getSurfaceColor(this.isDark),
+                cardBorderRadius: SP.RADIUS_L
+              }) {
+                Column({ space: SP.M }) {
+                  Row() {
+                    Button() {
+                      Text('‹')
+                        .fontSize(20)
+                        .fontColor(DT.getTextSecondary(this.isDark))
                     }
-                    .width('100%')
-                  }, (week: CalendarWeek, index: number) => `${this.currentYear}-${this.currentMonth}-${index}`)
+                    .width(32)
+                    .height(32)
+                    .backgroundColor('transparent')
+                    .scale({ x: 1, y: 1 })
+                    .animation(ANI.pressFeedbackFine())
+                    .onClick(() => this.previousMonth())
+
+                    Text(`${this.currentYear}年${this.currentMonth + 1}月`)
+                      .fontSize(TYP.SIZE_H3)
+                      .fontWeight(TYP.WEIGHT_MEDIUM)
+                      .fontColor(DT.getTextPrimary(this.isDark))
+
+                    Button() {
+                      Text('›')
+                        .fontSize(20)
+                        .fontColor(DT.getTextSecondary(this.isDark))
+                    }
+                    .width(32)
+                    .height(32)
+                    .backgroundColor('transparent')
+                    .scale({ x: 1, y: 1 })
+                    .animation(ANI.pressFeedbackFine())
+                    .onClick(() => this.nextMonth())
+                  }
+                  .width('100%')
+                  .justifyContent(FlexAlign.SpaceBetween)
+
+                  Row({ space: 0 }) {
+                    ForEach(this.weekdays, (day: string) => {
+                      Text(day)
+                        .fontSize(TYP.SIZE_CAPTION)
+                        .fontColor(DT.getTextSecondary(this.isDark))
+                        .width('100%')
+                        .textAlign(TextAlign.Center)
+                    }, (day: string) => day)
+                  }
+                  .width('100%')
+
+                  Column({ space: 0 }) {
+                    ForEach(this.viewModel.generateCalendarMonth(this.currentYear, this.currentMonth).weeks,
+                      (week: CalendarWeek, weekIndex: number) => {
+                        Row({ space: 0 }) {
+                          ForEach(week.days, (day: CalendarDay) => {
+                            this.CalendarDayCell(day)
+                          }, (day: CalendarDay) => day.date)
+                        }
+                        .width('100%')
+                      }, (week: CalendarWeek, index: number) => `${this.currentYear}-${this.currentMonth}-${index}`)
+                  }
+                  .width('100%')
                 }
                 .width('100%')
               }
-              .width('100%')
-              .padding(SP.M)
-              .backgroundColor($r('app.color.background_primary'))
-              .borderRadius(SP.RADIUS_L)
 
-              // Sync button
               Row({ space: SP.M }) {
                 Button('同步到系统日历')
                   .layoutWeight(1)
                   .height(44)
-                  .backgroundColor($r('app.color.brand_primary'))
-                  .borderRadius(SP.RADIUS_S)
+                  .backgroundColor(DT.BRAND_PRIMARY)
+                  .borderRadius(SP.RADIUS_M)
+                  .fontSize(TYP.SIZE_BODY)
+                  .fontWeight(TYP.WEIGHT_MEDIUM)
                   .enabled(!this.isSyncing)
+                  .scale({ x: 1, y: 1 })
+                  .animation(ANI.pressFeedbackFine())
                   .onClick(() => this.syncToCalendar())
 
                 if (this.viewModel.getUnsyncedEvents().length > 0) {
                   Text(`${this.viewModel.getUnsyncedEvents().length}待同步`)
-                    .fontSize(12)
-                    .fontColor($r('app.color.warning'))
+                    .fontSize(TYP.SIZE_CAPTION)
+                    .fontColor(DT.WARNING)
                     .padding({ left: SP.S, right: SP.S })
                 }
               }
@@ -336,41 +370,38 @@ struct SchedulePage {
 
               if (this.syncMessage) {
                 Text(this.syncMessage)
-                  .fontSize(12)
-                  .fontColor($r('app.color.text_secondary'))
+                  .fontSize(TYP.SIZE_CAPTION)
+                  .fontColor(DT.getTextSecondary(this.isDark))
                   .width('100%')
                   .textAlign(TextAlign.Center)
               }
 
-              // Selected date events
               Column({ space: SP.M }) {
                 Row() {
                   Text(`${this.selectedDate} 日程`)
-                    .fontSize(16)
-                    .fontWeight(FontWeight.Medium)
-                    .fontColor($r('app.color.text_primary'))
+                    .fontSize(TYP.SIZE_H3)
+                    .fontWeight(TYP.WEIGHT_MEDIUM)
+                    .fontColor(DT.getTextPrimary(this.isDark))
 
                   Blank()
 
                   Text(`${this.viewModel.getEventsByDate(new Date(this.selectedDate)).length}个事件`)
-                    .fontSize(12)
-                    .fontColor($r('app.color.text_secondary'))
+                    .fontSize(TYP.SIZE_CAPTION)
+                    .fontColor(DT.getTextSecondary(this.isDark))
                 }
                 .width('100%')
 
                 if (this.viewModel.getEventsByDate(this.parseDateString(this.selectedDate)).length === 0) {
-                  Column({ space: SP.S }) {
-                    Text('暂无日程')
-                      .fontSize(14)
-                      .fontColor($r('app.color.text_secondary'))
-
-                    Text('与 note-bot 对话记录日程')
-                      .fontSize(12)
-                      .fontColor($r('app.color.text_tertiary'))
-                  }
-                  .width('100%')
-                  .padding({ top: 30, bottom: 30 })
-                  .alignItems(HorizontalAlign.Center)
+                  EmptyState({
+                    icon: '📅',
+                    title: '暂无日程',
+                    message: '与 note-bot 对话记录日程',
+                    actionText: '刷新',
+                    onAction: () => {
+                      this.viewModel.loadData();
+                    }
+                  })
+                    .padding({ top: 30, bottom: 30 })
                 } else {
                   ForEach(this.viewModel.getEventsByDate(this.parseDateString(this.selectedDate)),
                     (event: ScheduleEvent) => {
@@ -380,42 +411,43 @@ struct SchedulePage {
               }
               .width('100%')
 
-              // Today's events summary
-              Column({ space: SP.M }) {
-                Row() {
-                  Text('今日日程')
-                    .fontSize(16)
-                    .fontWeight(FontWeight.Medium)
-                    .fontColor($r('app.color.text_primary'))
+              HmCard({
+                cardPadding: SP.M,
+                cardBgColor: DT.getSurfaceColor(this.isDark),
+                cardBorderRadius: SP.RADIUS_L
+              }) {
+                Column({ space: SP.M }) {
+                  Row() {
+                    Text('今日日程')
+                      .fontSize(TYP.SIZE_H3)
+                      .fontWeight(TYP.WEIGHT_MEDIUM)
+                      .fontColor(DT.getTextPrimary(this.isDark))
 
-                  Blank()
+                    Blank()
 
-                  Text(`${this.viewModel.getTodayEvents().length}个事件`)
-                    .fontSize(12)
-                    .fontColor($r('app.color.text_secondary'))
+                    Text(`${this.viewModel.getTodayEvents().length}个事件`)
+                      .fontSize(TYP.SIZE_CAPTION)
+                      .fontColor(DT.getTextSecondary(this.isDark))
+                  }
+                  .width('100%')
+
+                  if (this.viewModel.getTodayEvents().length === 0) {
+                    Text('今天没有安排')
+                      .fontSize(TYP.SIZE_BODY)
+                      .fontColor(DT.getTextSecondary(this.isDark))
+                      .width('100%')
+                      .padding({ top: 20, bottom: 20 })
+                      .textAlign(TextAlign.Center)
+                  } else {
+                    ForEach(this.viewModel.getTodayEvents(),
+                      (event: ScheduleEvent) => {
+                        this.EventItem(event)
+                      }, (event: ScheduleEvent) => event.id)
+                  }
                 }
                 .width('100%')
-
-                if (this.viewModel.getTodayEvents().length === 0) {
-                  Text('今天没有安排')
-                    .fontSize(12)
-                    .fontColor($r('app.color.text_tertiary'))
-                    .width('100%')
-                    .padding({ top: 20, bottom: 20 })
-                    .textAlign(TextAlign.Center)
-                } else {
-                  ForEach(this.viewModel.getTodayEvents(),
-                    (event: ScheduleEvent) => {
-                      this.EventItem(event)
-                    }, (event: ScheduleEvent) => event.id)
-                }
               }
-              .width('100%')
-              .padding(SP.M)
-              .backgroundColor($r('app.color.background_primary'))
-              .borderRadius(SP.RADIUS_L)
 
-              // Bottom spacing
               Column().height(20)
             }
             .width('100%')
@@ -428,7 +460,7 @@ struct SchedulePage {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor($r('app.color.background_secondary'))
+      .backgroundColor(DT.getBackgroundColor(this.isDark))
     }
     .width('100%')
     .height('100%')
@@ -438,6 +470,6 @@ struct SchedulePage {
     PageTransitionEnter({ duration: 300, curve: Curve.EaseOut })
       .slide(SlideEffect.Right)
     PageTransitionExit({ duration: 200, curve: Curve.EaseIn })
-      .slide(SlideEffect.Left)
+      .slide(SlideEffect.Right)
   }
 }

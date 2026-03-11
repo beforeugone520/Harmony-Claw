@@ -3,7 +3,7 @@
   "name": "日程管理",
   "version": "1.0.0",
   "description": "记录日程安排，支持日历同步",
-  "author": "OpenClaw",
+  "author": "BeforeUgone",
   "tools": [
     {
       "name": "write_event",
